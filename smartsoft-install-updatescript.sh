@@ -149,17 +149,23 @@ function system_upgrade() {
 
 function create_remote_miron() {
 	if ! [ -d .git/refs/remotes/miron ]; then
-		git clone -o miron --recurse-submodules $1 || askabort
+		git remote add miron $1 || askabort
 	fi
 	git remote update
 }
 
-function create_master_branch() {
+function switch_master_branch() {
 	if ! [ -n "$(git branch --list master)" ]; then
 		git checkout -b master --track $1/$2 
 	else
 		git branch master -u $1/$2
 	fi	
+}
+
+function clone_repos() {
+	if ! [ -d $1 ]; then
+		git clone -o $1 --recursive-submodules $2
+	fi
 }
 
 
@@ -362,19 +368,25 @@ repo-co-smartsoft)
 	cd ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
 
 	progressbarinfo "Cloning repositories SmartSoftComponentDeveloperAPIcpp.git"
-	git clone https://github.com/Servicerobotics-Ulm/SmartSoftComponentDeveloperAPIcpp.git || askabort
+	clone_repos SmartSoftComponentDeveloperAPIcpp https://github.com/Servicerobotics-Ulm/SmartSoftComponentDeveloperAPIcpp.git || askabort
+	
 	progressbarinfo "Cloning repositories AceSmartSoftFramework.git"
-	create_remote_miron "https://github.com/MiRON-project/AceSmartSoftFramework.git" || askabort
+	clone_repos AceSmartSoftFramework "https://github.com/MiRON-project/AceSmartSoftFramework.git" || askabort
+	
 	progressbarinfo "Cloning repositories UtilityRepository.git"
-	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
+	clone_repos UtilityRepository "https://github.com/MiRON-project/UtilityRepository.git" || askabort
+	
 	progressbarinfo "Cloning repositories DataRepository.git"
-	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
+	clone_repos DataRepository "https://github.com/MiRON-project/DataRepository.git" || askabort
+	
 	progressbarinfo "Cloning repositories DomainModelsRepositories.git"
-	git clone https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
+	clone_repos DomainModelsRepositories https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
+	
 	progressbarinfo "Cloning repositories ComponentRepository.git"
-	create_remote_miron https://github.com/MiRON-project/ComponentRepository.git || askabort
+	clone_repos ComponentRepository https://github.com/MiRON-project/ComponentRepository.git || askabort
+	
 	progressbarinfo "Cloning repositories SystemRepository.git"
-	create_remote_miron https://github.com/MiRON-project/SystemRepository.git || askabort
+	clone_repos SystemRepository https://github.com/MiRON-project/SystemRepository.git || askabort
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
@@ -477,14 +489,14 @@ repo-up-smartsoft)
 	cd $SMART_ROOT_ACE/repos/UtilityRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
-	create_master_branch "miron" "master"
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DataRepository"
 	cd $SMART_ROOT_ACE/repos/DataRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
-	create_master_branch "miron" "master"
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DomainModelsRepositories"
@@ -496,14 +508,14 @@ repo-up-smartsoft)
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
-	create_master_branch "miron" "master"
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update SystemRepository"
 	cd $SMART_ROOT_ACE/repos/SystemRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
-	create_master_branch "miron" "master"
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	exit 0
