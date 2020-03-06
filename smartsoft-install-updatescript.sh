@@ -142,8 +142,8 @@ function check_sudo() {
 function system_upgrade() {
 	check_sudo
 	sleep 2
-	apt-get -y --force-yes update || askabort
-	apt-get -y --force-yes upgrade || askabort
+	apt-get -y update || askabort
+	apt-get -y upgrade || askabort
 }
 
 function create_remote_miron() {
@@ -179,17 +179,13 @@ if `grep --ignore-case bionic /etc/os-release > /dev/null`; then
 fi
 
 if ! [ -x "$(command -v xterm)" ]; then
-	echo
-	echo "ERROR: xterm not found. Install using 'sudo apt-get install xterm'"
-	echo
-	exit
+	check_sudo
+	sudo apt -y install xterm
 fi
 
 if ! [ -x "$(command -v zenity)" ]; then
-	echo
-	echo "ERROR: zenity not found. Install using 'sudo apt-get install zenity'"
-	echo
-	exit
+	check_sudo
+	sudo apt -y install zenity
 fi
 
 case "$BCMD" in
@@ -287,8 +283,9 @@ package-install)
 	system_upgrade
 
 	progressbarinfo "Installing packages ..."
+	check_sudo
 	# General packages:
-	apt-get -y --force-yes install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
+	sudo apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
  meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libcv-dev libcvaux-dev libhighgui-dev \
  build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
  lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
@@ -297,22 +294,22 @@ package-install)
 
 	# 12.04 packages
 	if [ "$OS_PRECISE" = true ]; then
-		apt-get -y --force-yes install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
+		sudo apt -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
 	fi
 
 	# Other packages to install - except for raspberry pi:
 	if [ "$OS_RASPBIAN" = true ]; then 
-		apt-get -y --force-yes install libwxgtk2.8-dev || askabort
+		sudo apt -y install libwxgtk2.8-dev || askabort
 	fi
 
 	# Xenial (16.04 Packages)
 	if [ "$OS_XENIAL" = true ]; then
-		apt-get -y --force-yes install openjdk-8-jre libtbb-dev || askabort
+		sudo apt -y install openjdk-8-jre libtbb-dev || askabort
 	fi
 
 	# Bionic (18.04 Packages)
 	if [ "$OS_BIONIC" = true ]; then
-		apt-get -y --force-yes install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
+		sudo apt -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
 	fi
 
 	exit 0
@@ -327,6 +324,7 @@ ace-source-install)
 	fi
 
 	progressbarinfo "Running ACE source install (will take some time)"
+	check_sudo 
 
 	sleep 2
 	wget -nv https://github.com/MiRON-project/AceSmartSoftFramework/blob/master/INSTALL-ACE-6.5.8.sh -O /tmp/INSTALL-ACE-6.5.8.sh || askabort
@@ -386,6 +384,7 @@ repo-co-smartsoft)
 miron-depend)
 
 	progressbarinfo "Building MIRoN Dependencies"
+	check_sudo
 
 	sleep 2
 
@@ -393,13 +392,12 @@ miron-depend)
 	WEBOTS_EXEC=~/dev/webots/webots
 	if ! [ -x "$(command -v webots)" ] || ! [ -x "$(command -v \$WEBOTS_EXEC/webots)" ]; then
 		mkdir -p ~/dev && cd ~/dev || askabort
-		check_sudo
-		apt -y --force-yes install git g++ cmake execstack libusb-dev \
-swig python2.7-dev libglu1-mesa-dev libglib2.0-dev libfreeimage-dev \
+		sudo apt -y install git g++ cmake execstack libusb-dev swig \
+python2.7-dev libglu1-mesa-dev libglib2.0-dev libfreeimage-dev \
 libfreetype6-dev libxml2-dev libzzip-0-13 libboost-dev libavcodec-extra \
 libgd-dev libssh-gcrypt-dev libzip-dev python-pip libreadline-dev \
 libassimp-dev pbzip2 libpci-dev || askabort
-		apt -y --force-yes install libssl-dev ffmpeg python3.6-dev \
+		apt -y install libssl-dev ffmpeg python3.6-dev \
 python3.7-dev || askabort
 		git clone --recurse-submodules https://github.com/cyberbotics/webots.git || askabort
 		cd webots && make || askabort
@@ -411,12 +409,11 @@ python3.7-dev || askabort
 	if [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 8"* ]] || [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 9"* ]]; then
 		echo "-- found Gazebo 8 or greater"
 	else
-		check_sudo
 		sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
 		wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - || askabort
-		apt -y --force-yes update || askabort
-		apt -y --force-yes install gazebo9 || askabort
-		apt -y --force-yes install libgazebo9-dev || askabort
+		sudo apt -y update || askabort
+		sudo apt -y install gazebo9 || askabort
+		sudo apt -y install libgazebo9-dev || askabort
 		GAZEBO_SETUP=/usr/share/gazebo/setup.sh
 		if ! [-f "$GAZEBO_SETUP" ]; then
 			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> GAZEBO_SETUP
@@ -432,11 +429,10 @@ python3.7-dev || askabort
 	progressbarinfo "Building MRPT dependency"
 	MRPT_PATH=~/dev/mrpt
 	if ! [ -d "$MRPT_PATH" ]; then
-		check_sudo
 		mkdir -p ~/dev && cd ~/dev || askabort
-		apt -y --force-yes install build-essential pkg-config cmake \ 
+		sudo apt -y install build-essential pkg-config cmake \ 
 libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
-		apt -y --force-yes install libftdi-dev freeglut3-dev zlib1g-dev \
+		sudo apt -y install libftdi-dev freeglut3-dev zlib1g-dev \
 libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev 
 libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
 liboctomap-dev || askabort
@@ -559,12 +555,12 @@ build-smartsoft)
 ###############################################################################
 toolchain-update)
 	progressbarinfo "Running toolchain installation ..."
+	check_sudo
 	# check if OpenJDK 8 is installed (autoinstall it if needed)
 	if [[ $(java -version 2>&1) == "openjdk version \"1.8"* ]] || [[ $(java -version 2>&1) == "openjdk version \"11."* ]]; then
 		echo "-- found OpenJDK 1.8 or greater"
 	else
 		progressbarinfo "Installing dependency OpenJDK 8 ..."
-		check_sudo
 		sudo apt install -y openjdk-8-jre || askabort
 	fi
 
