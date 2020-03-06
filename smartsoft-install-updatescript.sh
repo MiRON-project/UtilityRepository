@@ -91,16 +91,12 @@ source ~/.profile
 
 SCRIPT_DIR=`pwd`
 SCRIPT_NAME=$0
-SCRIPT_UPDATE_URL="https://github.com/Servicerobotics-Ulm/UtilityRepository/raw/master/smartsoft-install-updatescript.sh"
+SCRIPT_UPDATE_URL="https://raw.githubusercontent.com/MiRON-project/UtilityRepository/master/smartsoft-install-updatescript.sh"
 
 TOOLCHAIN_NAME="SmartMDSD-Toolchain"
 TOOLCHAIN_VERSION="3.12"
 TOOLCHAIN_URL="https://github.com/Servicerobotics-Ulm/SmartMDSD-Toolchain/releases/download/v$TOOLCHAIN_VERSION/SmartMDSD-Toolchain-v$TOOLCHAIN_VERSION.tar.gz"
 TOOLCHAIN_LAUNCHER="$TOOLCHAIN_NAME.desktop"
-
-COMMIT='$Id$'
-
-echo "Update Script git=$COMMIT"
 
 function abort() {
 	echo 100 > /tmp/install-msg.log
@@ -143,6 +139,36 @@ function check_sudo() {
   fi
 }
 
+function system_upgrade() {
+	check_sudo
+	sleep 2
+	sudo apt -y update || askabort
+	sudo apt -y upgrade || askabort
+	sudo apt -y autoremove || askabort
+}
+
+function create_remote_miron() {
+	if ! [ -d .git/refs/remotes/miron ]; then
+		git remote add miron $1 || askabort
+	fi
+	git remote update
+}
+
+function switch_master_branch() {
+	if ! [ -n "$(git branch --list master)" ]; then
+		git checkout -b master --track $1/$2 
+	else
+		git branch master -u $1/$2
+	fi	
+}
+
+function clone_repos() {
+	if ! [ -d $1 ]; then
+		git clone -o $1 --recursive-submodules $2
+	fi
+}
+
+
 if `grep --ignore-case precise /etc/os-release > /dev/null`; then 
 	OS_PRECISE=true
 fi
@@ -155,29 +181,19 @@ if `grep --ignore-case xenial /etc/os-release > /dev/null`; then
 	OS_XENIAL=true
 fi
 
-if `ping -c 1 i-zafh-03.srrc.informatik.hs-ulm.de &> /dev/null`; then 
-	LOCATION_SRRC=true
+if `grep --ignore-case bionic /etc/os-release > /dev/null`; then 
+	OS_BIONIC=true
 fi
-
-
-
-
 
 if ! [ -x "$(command -v xterm)" ]; then
-	echo
-	echo "ERROR: xterm not found. Install using 'sudo apt-get install xterm'"
-	echo
-	exit
+	check_sudo
+	sudo apt -y install xterm
 fi
-
 
 if ! [ -x "$(command -v zenity)" ]; then
-	echo
-	echo "ERROR: zenity not found. Install using 'sudo apt-get install zenity'"
-	echo
-	exit
+	check_sudo
+	sudo apt -y install zenity
 fi
-
 
 case "$BCMD" in
 
@@ -189,26 +205,24 @@ menu)
 		zenity --info  --width=400  --text="Raspberry Pi was detected. Performing specific instructions for raspberry pi."
 	fi
 
-	if [ "$OS_XENIAL" = false ]; then 
-		zenity --info  --width=400 --text="Ubuntu 16.04 (Xenial) was not detected. Please note that the officially supported plattform is a plain Ubuntu 16.04 installation."
+	if [[ "$OS_XENIAL" = false ]] && [[ "$OS_BIONIC" = false ]]; then 
+		zenity --info  --width=400 --text="Ubuntu 16.04 (Xenial) and Ubuntu 18.04 (Bionic) were not detected."
 	fi
 
 	ACTION=$(zenity \
-		--title "SmartSoft Install & Update Script" \
+		--title "SmartSoft Install & MIRoN set up" \
 		--text "This is the automatic installation script for the SmartSoft World (v3-generation).\nThe default selection will install the SmartMDSD Toolchain with a full ACE/SmartSoft development environment.\n\nPlease select update actions to perform:\n\n* uses sudo: enter your password to the terminal window that pops up next." \
 		--list --checklist \
-		--height=350 \
-		--width=430 \
+		--height=400 \
+		--width=800 \
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
-		true package-upgrade "1) Upgrade system packages*" \
-		true toolchain-update "2) Update/Install SmartMDSD Toolchain to latest version" \
-		true menu-install "3) Install ACE/SmartSoft Development Environment and dependencies on a clean system*" \
+		false menu-install "1) Install ACE/SmartSoft Development Environment" \
+		true miron-depend "2) Install MIRoN Dependencies"  \
+		true toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		true repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
 		true build-smartsoft "5) Build/Compile ACE/SmartSoft Development Environment" \
-#		false svn-up-robotino "X) Update Robotino repositories" \
-#		false build-robotino "X) Build/Compile Robotino ACE/SmartSoft Components" \
 	) || exit 1
 
 	CMD=""
@@ -217,13 +231,11 @@ menu)
 		CMD="$CMD bash $SCRIPT_NAME $A || askabort;"
 	done
 	LOGFILE=`basename $0`.`date +"%Y%m%d%H%M"`.log
-	xterm -title "Updating..." -hold -e "exec > >(tee $LOGFILE); exec 2>&1; echo '### Update script start (git=$COMMIT)'; date; echo 'Logfile: $LOGFILE'; $CMD echo;echo;echo '### Update script finished. Logfile: $LOGFILE';echo 100 > /tmp/install-msg.log;echo;echo;rm /tmp/smartsoft-install-update.pid; date" &
+	xterm -title "Updating..." -hold -e "exec > >(tee $LOGFILE); exec 2>&1; echo '### Update script start'; date; echo 'Logfile: $LOGFILE'; $CMD echo;echo;echo '### Update script finished. Logfile: $LOGFILE';echo 100 > /tmp/install-msg.log;echo;echo;rm /tmp/smartsoft-install-update.pid; date" &
 	echo $! > /tmp/smartsoft-install-update.pid
 
 	progressbarinfo "Starting ..."
 	tail -f /tmp/install-msg.log | zenity --progress --title="Installing ..." --auto-close --text="Starting ..." --pulsate --width=500 &
-
-	#echo -e "icon:info\ntooltip:Update script finished."|zenity --notification --listen &
 
 	exit 0
 ;;
@@ -234,23 +246,20 @@ menu)
 menu-install)
 	progressbarinfo "Launching installation menu for ACE/SmartSoft"
 
-	zenity --question --width=500 --text="<b>ATTENTION</b>\n The script is about to install ACE/SmartSoft and dependency packages on this system.\n<b>Only use this function on a clean installation of Ubuntu 16.04.</b> Some of the following steps may not be execute twice without undoing them before.\n\n(support for Raspbian 8.0/Jessie and other distributions is experimental)\n\nDo you want to proceed?" || abort 
+	zenity --question --height=400 --width=800 --text="<b>ATTENTION</b>\n The script is about to install ACE/SmartSoft and dependencies on this system.\n<b>Only use this function on a clean installation of Ubuntu 16.04 or Ubuntu 18.04.</b> Some of the following steps may not be execute twice without undoing them before.\n\nDo you want to proceed?" || abort 
 
 	ACTION=$(zenity \
 		--title "Install ACE/SmartSoft and dependencies on a clean system" \
 		--text "About to install a development environment.\nPlease select update actions to perform:\n" \
 		--list --checklist \
-		--height=270 \
-		--width=620 \
+		--height=400 \
+		--width=800 \
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
 		true package-install "1.1) Install system packages required for ACE/SmartSoft" \
 		true ace-source-install "1.2) Install ACE from source" \
-		true repo-co-smartsoft "1.3) Checkout ACE/SmartSoft repository and set environment variables" \
-        	false package-internal-install "1.4) Install additional generic packages (optional)" \
-#		false package-install-robotino "X) Install packages for robotino robot" \
-#		false svn-co-robotino "X) Checkout ACE/SmartSoft repository for robotino robot" \
+		true repo-co-smartsoft "1.3) Checkout ACE/MIRoN repository and set environment variables" \
 	) || abort
 
 
@@ -265,7 +274,50 @@ menu-install)
 	echo
 	echo
 
-	#echo -e "icon:info\ntooltip:Installation script finished." | zenity --notification --listen &
+	exit 0
+;;
+
+###############################################################################
+package-install)
+	# become root
+	if [ "$(id -u)" != "0" ]; then
+		sudo bash $SCRIPT_NAME $1
+		exit 0
+	fi
+
+	progressbarinfo "Running package install ..."
+	sleep 2
+	system_upgrade
+
+	progressbarinfo "Installing packages ..."
+	check_sudo
+	# General packages:
+	sudo apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
+ meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libopencv-dev \
+ build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
+ lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
+
+	progressbarinfo "Installing OS-specific packages ..."
+
+	# 12.04 packages
+	if [ "$OS_PRECISE" = true ]; then
+		sudo apt -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
+	fi
+
+	# Other packages to install - except for raspberry pi:
+	if [ "$OS_RASPBIAN" = true ]; then 
+		sudo apt -y install libwxgtk2.8-dev || askabort
+	fi
+
+	# Xenial (16.04 Packages)
+	if [ "$OS_XENIAL" = true ]; then
+		sudo apt -y install openjdk-8-jre libtbb-dev || askabort
+	fi
+
+	# Bionic (18.04 Packages)
+	if [ "$OS_BIONIC" = true ]; then
+		sudo apt -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
+	fi
 
 	exit 0
 ;;
@@ -278,154 +330,37 @@ ace-source-install)
 		exit 0
 	fi
 
-
 	progressbarinfo "Running ACE source install (will take some time)"
+	check_sudo 
 
 	sleep 2
+	wget -nv https://raw.githubusercontent.com/MiRON-project/AceSmartSoftFramework/master/INSTALL-ACE-6.5.8.sh -O /tmp/INSTALL-ACE-6.5.8.sh || askabort
+	chmod +x /tmp/INSTALL-ACE-6.5.8.sh || askabort
+	/tmp/INSTALL-ACE-6.5.8.sh /opt || askabort
 
-	wget -nv https://github.com/Servicerobotics-Ulm/AceSmartSoftFramework/raw/master/INSTALL-ACE-6.0.2.sh -O /tmp/INSTALL-ACE-6.0.2.sh || askabort
-	chmod +x /tmp/INSTALL-ACE-6.0.2.sh || askabort
-	/tmp/INSTALL-ACE-6.0.2.sh /opt || askabort
-
-        echo "/opt/ACE_wrappers/lib" > /etc/ld.so.conf.d/ace.conf || askabort
+	echo "/opt/ACE_wrappers/lib" > /etc/ld.so.conf.d/ace.conf || askabort
 	ldconfig || askabort
 	exit 0
 ;;
 
 ###############################################################################
-package-install)
-	# become root
-	if [ "$(id -u)" != "0" ]; then
-		sudo bash $SCRIPT_NAME $1
-		exit 0
-	fi
 
-
-	progressbarinfo "Running package install ..."
-
-	sleep 2
-	progressbarinfo "Running apt-get update, upgrade ..."
-	apt-get -y --force-yes update || askabort
-	apt-get -y --force-yes upgrade || askabort
-
-	progressbarinfo "Installing packages ..."
-	# General packages:
-	apt-get -y --force-yes install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
- meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libcv-dev libcvaux-dev libhighgui-dev \
- build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
- lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
-
-	
-	progressbarinfo "Installing OS-specific packages ..."
-
-	# 12.04 packages
-	if [ "$OS_PRECISE" = true ]; then
-		apt-get -y --force-yes install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
-	fi
-
-	# Other packages to install - except for raspberry pi:
-	if [ "$OS_RASPBIAN" = true ]; then 
-		apt-get -y --force-yes install libwxgtk2.8-dev || askabort
-	fi
-
-	# Xenial (16.04 Packages)
-	if [ "$OS_XENIAL" = true ]; then
-		apt-get -y --force-yes install openjdk-8-jre libtbb-dev || askabort
-	fi
-
-	exit 0
-;;
 
 ###############################################################################
-package-internal-install)
-	# become root
-	if [ "$(id -u)" != "0" ]; then
-		sudo bash $SCRIPT_NAME $1
-		exit 0
-	fi
-
-	progressbarinfo	"Running internal package install ..."
-	sleep 2
-	apt-get update || askabort
-
-	apt-get -y --force-yes update || askabort
-	apt-get -y --force-yes upgrade || askabort
-
-	# Other packages to install - except for raspberry pi:
-	#if [ ! "$OS_RASPBIAN" = true ]; then 
-	#	apt-get -y --force-yes install libwxgtk2.8-dev || askabort
-	#fi
-
-	# Xenial (16.04 Packages)
-	if [ "$OS_XENIAL" = true ]; then
-		apt-get -y --force-yes install gparted gnome-session-flashback gconf-editor cmake-curses-gui inkscape gimp mplayer qiv nautilus-compare git || askabort
-	fi
-
-	exit 0
-;;
-###############################################################################
-
-package-install-robotino)
-	zenity --info --width=400 --text="You selected to install packages for robotino.\nPlease note that robotino is not yet supported by v3-generation of SmartSoft/SmartMDSD Toolchain."
-	abort
-	# become root
-#	if [ "$(id -u)" != "0" ]; then
-#		sudo bash $SCRIPT_NAME $1
-#		exit 0
-#	fi
-#
-#	echo -e "\n\n\n### Running package install ...\n\n\n"
-#	sleep 2
-#	
-#	CODENAME=`lsb_release -cs`
-#
-#       echo "deb http://packages.openrobotino.org/$CODENAME $CODENAME main" > /etc/apt/sources.list.d/openrobotino.list
-#	apt-get update || askabort
-#
-#	apt-get -y --force-yes install robotino-api2 rec-rpc libqt4-dev robotino-common || askabort
-#	exit 0
-;;
-
-###############################################################################
-package-upgrade)
-	# become root
-	if [ "$(id -u)" != "0" ]; then
-		sudo bash $SCRIPT_NAME $1
-		exit 0
-	fi
-
-	progressbarinfo "Updating system packages ... (apt-get update)"
-	sleep 2
-	apt-get -y --force-yes update || askabort
-
-	progressbarinfo "Updating system packages ... (apt-get upgrade)"
-	apt-get -y --force-yes upgrade || askabort
-	exit 0
-;;
-
-###############################################################################
-# checkout Public repository
+# checkout MIRoN repository
 repo-co-smartsoft)
-	# check if we are in the lab and then ask wether to continue to install external stuff
-	# or quit and continue with internal stuff
-	if [ $LOCATION_SRRC = true ]; then
-		if zenity --question --width=400 --text="It appears that you are installing from within the SRRC laboratory.\n\nDo you want to use the internal repositories instead of the public repositories?\n"; then
-			bash $SCRIPT_NAME repo-co-smartsoft-internal
-			exit 0
-		fi
-	fi
 
-	progressbarinfo "Cloning repositories"
+	progressbarinfo "Cloning repositories and Building Dependencies"
 
 	sleep 2
 
 	mkdir -p ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
 	ln -s ~/SOFTWARE/smartsoft-ace-mdsd-v3 ~/SOFTWARE/smartsoft || askabort
+	mkdir -p ~/SOFTWARE/smartsoft-ace-mdsd-v3/lib || askabort
 
 	echo "export ACE_ROOT=/opt/ACE_wrappers" >> ~/.profile
 	echo "export SMART_ROOT_ACE=\$HOME/SOFTWARE/smartsoft" >> ~/.profile
 	echo "export SMART_PACKAGE_PATH=\$SMART_ROOT_ACE/repos" >> ~/.profile
-	#echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:\$SMART_ROOT_ACE/lib" >> ~/.profile
 	echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$SMART_ROOT_ACE/lib" >> ~/.bashrc
 
 	source ~/.profile 
@@ -433,20 +368,25 @@ repo-co-smartsoft)
 	cd ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
 
 	progressbarinfo "Cloning repositories SmartSoftComponentDeveloperAPIcpp.git"
-	git clone https://github.com/Servicerobotics-Ulm/SmartSoftComponentDeveloperAPIcpp.git || askabort
+	clone_repos SmartSoftComponentDeveloperAPIcpp https://github.com/Servicerobotics-Ulm/SmartSoftComponentDeveloperAPIcpp.git || askabort
+	
 	progressbarinfo "Cloning repositories AceSmartSoftFramework.git"
-	git clone https://github.com/Servicerobotics-Ulm/AceSmartSoftFramework.git || askabort
+	clone_repos AceSmartSoftFramework "https://github.com/MiRON-project/AceSmartSoftFramework.git" || askabort
+	
 	progressbarinfo "Cloning repositories UtilityRepository.git"
-	git clone https://github.com/Servicerobotics-Ulm/UtilityRepository.git || askabort
+	clone_repos UtilityRepository "https://github.com/MiRON-project/UtilityRepository.git" || askabort
+	
 	progressbarinfo "Cloning repositories DataRepository.git"
-	git clone https://github.com/Servicerobotics-Ulm/DataRepository.git || askabort
+	clone_repos DataRepository "https://github.com/MiRON-project/DataRepository.git" || askabort
+	
 	progressbarinfo "Cloning repositories DomainModelsRepositories.git"
-	git clone https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
+	clone_repos DomainModelsRepositories https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
+	
 	progressbarinfo "Cloning repositories ComponentRepository.git"
-	git clone https://github.com/Servicerobotics-Ulm/ComponentRepository.git || askabort
+	clone_repos ComponentRepository https://github.com/MiRON-project/ComponentRepository.git || askabort
+	
 	progressbarinfo "Cloning repositories SystemRepository.git"
-	git clone https://github.com/Servicerobotics-Ulm/SystemRepository.git || askabort
-
+	clone_repos SystemRepository https://github.com/MiRON-project/SystemRepository.git || askabort
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
@@ -454,63 +394,81 @@ repo-co-smartsoft)
 ;;
 
 ###############################################################################
-# checkout SRRC-Internal repository
-repo-co-smartsoft-internal)
-	echo -e "\n\n\n### Running repo checkout (SRRC-INTERNAL REPOSITORIES) ...\n\n\n"
+miron-depend)
+
+	progressbarinfo "Installing MIRoN Dependencies"
+	check_sudo
+
 	sleep 2
 
-	progressbarinfo "Cloning repositories"
-
-	mkdir -p ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
-	ln -s ~/SOFTWARE/smartsoft-ace-mdsd-v3 ~/SOFTWARE/smartsoft || askabort
-
-	echo "export ACE_ROOT=/opt/ACE_wrappers" >> ~/.profile
-	echo "export SMART_ROOT_ACE=\$HOME/SOFTWARE/smartsoft" >> ~/.profile
-	echo "export SMART_PACKAGE_PATH=\$SMART_ROOT_ACE/repos" >> ~/.profile
-	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:\$SMART_ROOT_ACE/lib" >> ~/.profile
-
-	source ~/.profile 
-
-	cd ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
-
-	if ! [ -d "/mnt/ssh/robo/repositories/smartSoftDev_v3/" ]; then
-		zenity --info --width=400 --text="Error: /mnt/ssh/robo/repositories/smartSoftDev_v3/ is not accessible.\nPlease mount it before continuing.\n(you can keep this window open / the script active while doing so...)"
+	progressbarinfo "Building Webots Simulator"
+	WEBOTS_EXEC=~/dev/webots/webots
+	if ! [ -x "$(command -v webots)" ] || ! [ -x "$(command -v \$WEBOTS_EXEC/webots)" ]; then
+		mkdir -p ~/dev && cd ~/dev || askabort
+		sudo apt -y install git g++ cmake execstack libusb-dev swig \
+python2.7-dev libglu1-mesa-dev libglib2.0-dev libfreeimage-dev \
+libfreetype6-dev libxml2-dev libzzip-0-13 libboost-dev libavcodec-extra \
+libgd-dev libssh-gcrypt-dev libzip-dev python-pip libreadline-dev \
+libassimp-dev pbzip2 libpci-dev || askabort
+		apt -y install libssl-dev ffmpeg python3.6-dev \
+python3.7-dev || askabort
+		git clone --recurse-submodules https://github.com/cyberbotics/webots.git || askabort
+		cd webots && make || askabort
+		echo "export WEBOTS_HOME=\$HOME/dev/webots" >> ~/.profile
 	fi
 
-	progressbarinfo "Cloning repositories SmartSoftComponentDeveloperAPIcpp.git.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/SmartSoftComponentDeveloperAPIcpp.git || askabort
+	progressbarinfo "Building Gazebo Simulator"
+	# Check if Gazebo 8 or greater is installed (autoinstall it if needed)
+	if [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 8"* ]] || [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 9"* ]]; then
+		echo "-- found Gazebo 8 or greater"
+	else
+		sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
+		wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - || askabort
+		sudo apt -y update || askabort
+		sudo apt -y install gazebo9 || askabort
+		sudo apt -y install libgazebo9-dev || askabort
+		GAZEBO_SETUP=/usr/share/gazebo/setup.sh
+		if ! [-f "$GAZEBO_SETUP" ]; then
+			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> GAZEBO_SETUP
+			echo "export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org" >> GAZEBO_SETUP
+			echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9:\${GAZEBO_RESOURCE_PATH}" >> GAZEBO_SETUP
+			echo "export GAZEBO_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gazebo-9/plugins:\${GAZEBO_PLUGIN_PATH}" >> GAZEBO_SETUP
+			echo "export GAZEBO_MODEL_PATH=/usr/share/gazebo-9/models:\${GAZEBO_MODEL_PATH}" >> GAZEBO_SETUP
+			echo "export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:/usr/lib/x86_64-linux-gnu/gazebo-9/plugins" >> GAZEBO_SETUP
+			echo "export OGRE_RESOURCE_PATH=/usr/lib/x86_64-linux-gnu/OGRE-1.9.0" >> GAZEBO_SETUP
+		fi
+	fi
 
-	progressbarinfo "Cloning repositories AceSmartSoftFramework.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/AceSmartSoftFramework.git || askabort
+	progressbarinfo "Building MRPT dependency"
+	MRPT_PATH=~/dev/mrpt
+	if ! [ -d "$MRPT_PATH" ]; then
+		mkdir -p ~/dev && cd ~/dev || askabort
+		sudo apt -y install build-essential pkg-config cmake \ 
+libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
+		sudo apt -y install libftdi-dev freeglut3-dev zlib1g-dev \
+libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev 
+libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
+liboctomap-dev || askabort
+		git clone https://github.com/MiRON-project/mrpt.git || askabort
+		cd ~/dev/mrpt && mkdir -p build && cd build || askabort
+		cmake .. || askabort
+		make || askabort
+		ln -s ~/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
+		echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
+	fi
 
-	progressbarinfo "Cloning repositories UtilityRepository.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/UtilityRepository.git || askabort
-
-	progressbarinfo "Cloning repositories DataRepository.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/DataRepository.git || askabort
-
-	progressbarinfo "Cloning repositories DomainModelsRepositories.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/DomainModelsRepositories.git || askabort
-
-	progressbarinfo "Cloning repositories ComponentRepository.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/ComponentRepository.git || askabort
-
-	progressbarinfo "Cloning repositories SystemRepository.git"
-	git clone /mnt/ssh/robo/repositories/smartSoftDev_v3/SystemRepository.git || askabort
-
-	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, do one of the following:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"
+	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
 	exit 0
-
 ;;
 
 ###############################################################################
 repo-up-smartsoft)
-	echo -e "\n\n\n### Running ACE/SmartSoft repo update ...\n\n\n"
+	echo -e "\n\n\n### Running ACE/MIRoN repo update ...\n\n\n"
 	progressbarinfo "About to update repositories ..."
 	sleep 2
 
-	if zenity --question --width=400 --text="The installation script is about to update the repositories.\nThis will <b>overwrite all your modifications</b> that you did to the repositories in \$SMART_ROOT_ACE/repos/.\n\nDo you want to proceed?\n\nIt is safe to do so in case you did not modify SmartMDSD Toolchain projects or don't need the modifications anymore.\nIf you choose not to update, please do a 'git pull' for the repositories yourself."; then
+	if zenity --question --width=800 --text="The installation script is about to update the repositories.\nThis will <b>overwrite all your modifications</b> that you did to the repositories in \$SMART_ROOT_ACE/repos/.\n\nDo you want to proceed?\n\nIt is safe to do so in case you did not modify SmartMDSD Toolchain projects or don't need the modifications anymore.\nIf you choose not to update, please do a 'git pull' for the repositories yourself."; then
 		echo -e "\n\n\n# Continuing with repo update.\n\n\n"
 	else
 		echo -e "\n\n\n# Not running repo update.\n\n\n"
@@ -530,11 +488,15 @@ repo-up-smartsoft)
 	progressbarinfo "Running ACE/SmartSoft repo update UtilityRepository"
 	cd $SMART_ROOT_ACE/repos/UtilityRepository || askabort
 	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DataRepository"
 	cd $SMART_ROOT_ACE/repos/DataRepository || askabort
 	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DomainModelsRepositories"
@@ -545,11 +507,15 @@ repo-up-smartsoft)
 	progressbarinfo "Running ACE/SmartSoft repo update ComponentRepository"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
 	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update SystemRepository"
 	cd $SMART_ROOT_ACE/repos/SystemRepository || askabort
 	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
+	switch_master_branch "miron" "master"
 	git pull || askabort
 
 	exit 0
@@ -600,55 +566,14 @@ build-smartsoft)
 ;;
 
 ###############################################################################
-svn-co-robotino)
-	zenity --info --width=400 --text="You selected to svn-co for robotino.\nPlease note that robotino is not yet supported by v3-generation of SmartSoft/SmartMDSD Toolchain."
-	abort
-#	echo -e "\n\n\n### Running Robotino ACE/SmartSoft SVN checkout ...\n\n\n"
-#	sleep 2
-#
-#	mkdir -p ~/SOFTWARE/smartsoft_robotino_components
-#
-#	svn co svn://svn.rec.de/openrobotino/smartsoft/trunk/components ~/SOFTWARE/smartsoft_robotino_components || askabort
-#	exit 0
-;;
-
-###############################################################################
-svn-up-robotino)
-	zenity --info --width=400 --text="You selected to svn-up for robotino.\nPlease note that robotino is not yet supported by v3-generation of SmartSoft/SmartMDSD Toolchain."
-#	echo -e "\n\n\n### Running Robotino SVN update ...\n\n\n"
-#	sleep 2
-#
-#	cd ~/SOFTWARE/smartsoft_robotino_components
-#	svn up || askabort
-#	exit 0
-;;
-
-###############################################################################
-build-robotino)
-	zenity --info --width=400 --text="You selected to build-robotino for robotino.\nPlease note that robotino is not yet supported by v3-generation of SmartSoft/SmartMDSD Toolchain."
-#	echo -e "\n\n\n### Running Build robotino ...\n\n\n"
-#	sleep 2
-#
-#	cd ~/SOFTWARE/smartsoft_robotino_components || askabort
-#	for I in Smart*; do
-#		cd ~/SOFTWARE/smartsoft_robotino_components/$I
-#		mkdir build
-#		cd build
-#		cmake ..
-#		make || askabort
-#	done
-#	exit 0
-;;
-
-###############################################################################
 toolchain-update)
 	progressbarinfo "Running toolchain installation ..."
+	check_sudo
 	# check if OpenJDK 8 is installed (autoinstall it if needed)
-	if [[ $(java -version 2>&1) == "openjdk version \"1.8"* ]]; then
-		echo "-- found OpenJDK 1.8"
+	if [[ $(java -version 2>&1) == "openjdk version \"1.8"* ]] || [[ $(java -version 2>&1) == "openjdk version \"11."* ]]; then
+		echo "-- found OpenJDK 1.8 or greater"
 	else
 		progressbarinfo "Installing dependency OpenJDK 8 ..."
-		check_sudo
 		sudo apt install -y openjdk-8-jre || askabort
 	fi
 
@@ -682,128 +607,8 @@ toolchain-update)
 	cp $TOOLCHAIN_LAUNCHER $HOME/.local/share/applications/
 	cp $TOOLCHAIN_LAUNCHER $(xdg-user-dir DESKTOP)
 
-#	if ! [ -x "$(command -v gio)" ]; then
-#		progressbarinfo "Installing dependency libglib2.0-bin (to use the GIO tool) ..."
-#		check_sudo
-#		sudo apt-get install -y libglib2.0-bin
-#	fi
-#	if [ -x "$(command -v gio)" ]; then
-#		gio set $HOME/Desktop/$TOOLCHAIN_LAUNCHER "metadata::trusted" yes
-#	fi
-
 	exit 0
-	
-
-#	TC_DOWNLOAD=`tempfile`
-#	progressbarinfo "Downloading SmartMDSD Toolchain ..."
-#	wget --progress=dot:mega --content-disposition $TOOLCHAIN_LATEST_URL -O $TC_DOWNLOAD || askabort
-#
-#	progressbarinfo "Setting up SmartMDSD Toolchain ..."
-#
-#	mv ~/SOFTWARE/SmartMDSD_Toolchain.latest ~/SOFTWARE/SmartMDSD_Toolchain.`date +%Y-%m-%d` 
-#	mkdir -p ~/SOFTWARE/SmartMDSD_Toolchain.latest 
-#	cd ~/SOFTWARE/SmartMDSD_Toolchain.latest || askabort
-#
-#	#TCNAME=$(ls * | sed "s/\.tar.*//g" | sed "s/\.bz2.*//g")
-#	tar xf $TC_DOWNLOAD || askabort
-#	EXECUTABLE=`pwd`/$(find ./ -name eclipse -type f)
-#	ICON=`pwd`/$(find ./ -name icon.xpm -type f)
-#
-#
-#	echo "Toolchain executable is: $EXECUTABLE"
-#	
-#	echo -e "\n# Setting up workspace path ...\n"
-#	IDEPREFS=$(find ./ -name org.eclipse.ui.ide.prefs)
-#	echo "MAX_RECENT_WORKSPACES=5
-#RECENT_WORKSPACES=$HOME/workspaces/SmartMDSD-Toolchain
-#RECENT_WORKSPACES_PROTOCOL=3
-#SHOW_WORKSPACE_SELECTION_DIALOG=true
-#eclipse.preferences.version=1
-#" > $IDEPREFS
-#
-#	progressbarinfo "Creating desktop starter ..."
-#echo "[Desktop Entry]
-#Encoding=UTF-8
-#Version=1.0
-#Name=SmartMDSD Toolchain
-#Comment=Starts the latest version of the SmartMDSD Toolchain
-#Type=Application
-#Exec=$EXECUTABLE
-#Icon=$ICON
-#" > ~/Desktop/SmartMDSDToolchain.desktop
-#	chmod +x ~/Desktop/SmartMDSDToolchain.desktop
-#	exit 0
-;;
-
-
-###############################################################################
-# Update the virtual machine. Only run from within the vm!
-###############################################################################
-vm-update)
-
-	if [ "$(hostname)" != "smartsoft-vm" ]; then
-		echo "Virtual machine was not detected."
-		zenity --question --width=400 --text="<b>Warning</b>: Virtual machine was not detected.\nOnly run this action from within the virtual machine.\n\nDo you want to proceed at your own risk?" || abort
-	fi
-
-	if zenity --question --width=400 --text="This installation/update script has an updater included.\nDo you want to update this script before installing it?\n\nWill update script from:\n$SCRIPT_UPDATE_URL\n"; then
-		bash $SCRIPT_NAME script-update
-		exit 0
-	else
-		progressbarinfo "Not updating the script before running it."
-	fi
-
-	progressbarinfo "Starting ..."
-	tail -f /tmp/install-msg.log | zenity --progress --title="Installing ..." --auto-close --text="Starting ..." --pulsate --width=500 &
-
-	ACTION="toolchain-update|repo-up-smartsoft|build-smartsoft|vm-update-compile"
-
-	CMD=""
-	IFS='|';
-	for A in $ACTION; do
-		CMD="$CMD bash $SCRIPT_NAME $A || askabort;"
-	done
-	LOGFILE=`basename $0`.`date +"%Y%m%d%H%M"`.log
-	xterm -title "Updating..." -hold -e "exec > >(tee $LOGFILE); exec 2>&1; echo '### Update script start (git=$COMMIT)'; date; echo 'Logfile: $LOGFILE'; $CMD echo;echo;echo '### Update script finished. Logfile: $LOGFILE';echo 100 > /tmp/install-msg.log;echo;echo;rm /tmp/smartsoft-install-update.pid; date" &
-
-	echo $! > /tmp/smartsoft-install-update.pid
-
-	exit 0
-;;
-
-# compiles vm specific components
-vm-update-compile)
-
-	progressbarinfo "Compiling vm-specific components ..."
-	sleep 2
-
-	progressbarinfo "Compiling Player Stage Component"
-	cd $SMART_ROOT_ACE/repos/ComponentRepository/ComponentPlayerStageSimulator/smartsoft/ || askabort
-	mkdir build
-	cd build || askabort
-	cmake .. || askabort
-	make || askabort
-
-	progressbarinfo "Compiling Gazebo Simulator Component"
-	cd $SMART_ROOT_ACE/repos/ComponentRepository/SmartGazeboBaseServer/smartsoft/ || askabort
-	mkdir build
-	cd build || askabort
-	cmake .. || askabort
-	make || askabort
-
-	progressbarinfo "Compiling ComponentLaserObstacleAvoid"
-	cd $SMART_ROOT_ACE/repos/ComponentRepository/ComponentLaserObstacleAvoid/smartsoft/ || askabort
-	mkdir build
-	cd build || askabort
-	cmake .. || askabort
-	make || askabort
-
-	progressbarinfo "Compiling vm-specific components ... Done."
-	sleep 1
-
-	exit 0
-;;
-
+;;	
 
 ###############################################################################
 # Update the installation script
@@ -836,8 +641,6 @@ script-update)
 	exit 0
 ;;
 
-
-
 ###############################################################################
 # The usual entry point of this script. We use this to determine the
 # default action. No extra code should go here.
@@ -851,7 +654,7 @@ start)
 
 ###############################################################################
 *)
-	if zenity --question --text="This installation and update script has an updater included.\nDo you want to update this script before continuing?\n\nUpdate location:\n$SCRIPT_UPDATE_URL\n"; then
+	if zenity --question --height=100 --width=800 --text="This installation and update script has an updater included.\nDo you want to update this script before continuing?\n\nUpdate location:\n$SCRIPT_UPDATE_URL\n"; then
 		bash $SCRIPT_NAME script-update
 		exit 0
 	else
