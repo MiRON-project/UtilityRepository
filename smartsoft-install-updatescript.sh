@@ -212,7 +212,7 @@ menu)
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
-		true menu-install "1) Install ACE/SmartSoft Development Environment" \
+		false menu-install "1) Install ACE/SmartSoft Development Environment" \
 		true miron-depend "2) Install MIRoN Dependencies"  \
 		true toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		true repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
@@ -328,7 +328,7 @@ ace-source-install)
 	check_sudo 
 
 	sleep 2
-	wget -nv https://github.com/MiRON-project/AceSmartSoftFramework/blob/master/INSTALL-ACE-6.5.8.sh -O /tmp/INSTALL-ACE-6.5.8.sh || askabort
+	wget -nv https://raw.githubusercontent.com/MiRON-project/AceSmartSoftFramework/master/INSTALL-ACE-6.5.8.sh -O /tmp/INSTALL-ACE-6.5.8.sh || askabort
 	chmod +x /tmp/INSTALL-ACE-6.5.8.sh || askabort
 	/tmp/INSTALL-ACE-6.5.8.sh /opt || askabort
 
@@ -384,12 +384,12 @@ repo-co-smartsoft)
 ###############################################################################
 miron-depend)
 
-	progressbarinfo "Building MIRoN Dependencies"
+	progressbarinfo "Installing MIRoN Dependencies"
 	check_sudo
 
 	sleep 2
 
-	progressbarinfo "Building Webots Simulator dependency"
+	progressbarinfo "Building Webots Simulator"
 	WEBOTS_EXEC=~/dev/webots/webots
 	if ! [ -x "$(command -v webots)" ] || ! [ -x "$(command -v \$WEBOTS_EXEC/webots)" ]; then
 		mkdir -p ~/dev && cd ~/dev || askabort
@@ -405,7 +405,7 @@ python3.7-dev || askabort
 		echo "export WEBOTS_HOME=\$HOME/dev/webots" >> ~/.profile
 	fi
 
-	progressbarinfo "Building Gazebo Simulator dependency"
+	progressbarinfo "Building Gazebo Simulator"
 	# Check if Gazebo 8 or greater is installed (autoinstall it if needed)
 	if [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 8"* ]] || [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 9"* ]]; then
 		echo "-- found Gazebo 8 or greater"
