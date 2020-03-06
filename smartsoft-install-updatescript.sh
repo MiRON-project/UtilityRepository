@@ -142,8 +142,9 @@ function check_sudo() {
 function system_upgrade() {
 	check_sudo
 	sleep 2
-	apt-get -y update || askabort
-	apt-get -y upgrade || askabort
+	sudo apt -y update || askabort
+	sudo apt -y upgrade || askabort
+	sudo apt -y autoremove || askabort
 }
 
 function create_remote_miron() {
@@ -286,7 +287,7 @@ package-install)
 	check_sudo
 	# General packages:
 	sudo apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
- meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libcv-dev libcvaux-dev libhighgui-dev \
+ meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libopencv-dev \
  build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
  lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
 
