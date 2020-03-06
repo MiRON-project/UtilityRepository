@@ -207,8 +207,8 @@ menu)
 		--title "SmartSoft Install & MIRoN set up" \
 		--text "This is the automatic installation script for the SmartSoft World (v3-generation).\nThe default selection will install the SmartMDSD Toolchain with a full ACE/SmartSoft development environment.\n\nPlease select update actions to perform:\n\n* uses sudo: enter your password to the terminal window that pops up next." \
 		--list --checklist \
-		--height=350 \
-		--width=430 \
+		--height=400 \
+		--width=800 \
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
@@ -240,14 +240,14 @@ menu)
 menu-install)
 	progressbarinfo "Launching installation menu for ACE/SmartSoft"
 
-	zenity --question --width=500 --text="<b>ATTENTION</b>\n The script is about to install ACE/SmartSoft and dependencies on this system.\n<b>Only use this function on a clean installation of Ubuntu 16.04 or Ubuntu 18.04.</b> Some of the following steps may not be execute twice without undoing them before.\n\nDo you want to proceed?" || abort 
+	zenity --question --height=400 --width=800 --text="<b>ATTENTION</b>\n The script is about to install ACE/SmartSoft and dependencies on this system.\n<b>Only use this function on a clean installation of Ubuntu 16.04 or Ubuntu 18.04.</b> Some of the following steps may not be execute twice without undoing them before.\n\nDo you want to proceed?" || abort 
 
 	ACTION=$(zenity \
 		--title "Install ACE/SmartSoft and dependencies on a clean system" \
 		--text "About to install a development environment.\nPlease select update actions to perform:\n" \
 		--list --checklist \
-		--height=270 \
-		--width=620 \
+		--height=400 \
+		--width=800 \
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
@@ -456,7 +456,7 @@ repo-up-smartsoft)
 	progressbarinfo "About to update repositories ..."
 	sleep 2
 
-	if zenity --question --width=400 --text="The installation script is about to update the repositories.\nThis will <b>overwrite all your modifications</b> that you did to the repositories in \$SMART_ROOT_ACE/repos/.\n\nDo you want to proceed?\n\nIt is safe to do so in case you did not modify SmartMDSD Toolchain projects or don't need the modifications anymore.\nIf you choose not to update, please do a 'git pull' for the repositories yourself."; then
+	if zenity --question --width=800 --text="The installation script is about to update the repositories.\nThis will <b>overwrite all your modifications</b> that you did to the repositories in \$SMART_ROOT_ACE/repos/.\n\nDo you want to proceed?\n\nIt is safe to do so in case you did not modify SmartMDSD Toolchain projects or don't need the modifications anymore.\nIf you choose not to update, please do a 'git pull' for the repositories yourself."; then
 		echo -e "\n\n\n# Continuing with repo update.\n\n\n"
 	else
 		echo -e "\n\n\n# Not running repo update.\n\n\n"
@@ -642,7 +642,7 @@ start)
 
 ###############################################################################
 *)
-	if zenity --question --text="This installation and update script has an updater included.\nDo you want to update this script before continuing?\n\nUpdate location:\n$SCRIPT_UPDATE_URL\n"; then
+	if zenity --question --height=100 --width=800 --text="This installation and update script has an updater included.\nDo you want to update this script before continuing?\n\nUpdate location:\n$SCRIPT_UPDATE_URL\n"; then
 		bash $SCRIPT_NAME script-update
 		exit 0
 	else
