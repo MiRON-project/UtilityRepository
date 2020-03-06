@@ -395,6 +395,10 @@ repo-co-smartsoft)
 
 ###############################################################################
 miron-depend)
+	if [ "$(id -u)" != "0" ]; then
+		sudo bash $SCRIPT_NAME $1
+		exit 0
+	fi
 
 	progressbarinfo "Installing MIRoN Dependencies"
 	check_sudo
