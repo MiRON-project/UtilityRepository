@@ -142,20 +142,20 @@ function check_sudo() {
 function system_upgrade() {
 	check_sudo
 	sleep 2
-	sudo apt -y update || askabort
-	sudo apt -y upgrade || askabort
-	sudo apt -y autoremove || askabort
+	sudo apt-get -y update  || askabort
+	sudo apt-get -y upgrade || askabort
+	sudo apt-get -y autoremove || askabort
 }
 
 function create_remote_miron() {
-	if ! [ -d .git/refs/remotes/miron ]; then
+	if [ ! -d .git/refs/remotes/miron ]; then
 		git remote add miron $1 || askabort
 	fi
 	git remote update
 }
 
 function switch_master_branch() {
-	if ! [ -n "$(git branch --list master)" ]; then
+	if [ ! -n "$(git branch --list master)" ]; then
 		git checkout -b master --track $1/$2 
 	else
 		git branch master -u $1/$2
@@ -163,8 +163,8 @@ function switch_master_branch() {
 }
 
 function clone_repos() {
-	if ! [ -d $1 ]; then
-		git clone -o $1 --recursive-submodules $2
+	if [ ! -d $1 ]; then
+		git clone -o $1 --recurse-submodules $2 --progress 2>&1
 	fi
 }
 
@@ -185,14 +185,14 @@ if `grep --ignore-case bionic /etc/os-release > /dev/null`; then
 	OS_BIONIC=true
 fi
 
-if ! [ -x "$(command -v xterm)" ]; then
+if [ ! -x "$(command -v xterm)" ]; then
 	check_sudo
-	sudo apt -y install xterm
+	apt-get -y install xterm
 fi
 
-if ! [ -x "$(command -v zenity)" ]; then
+if [ ! -x "$(command -v zenity)" ]; then
 	check_sudo
-	sudo apt -y install zenity
+	apt-get -y install zenity
 fi
 
 case "$BCMD" in
@@ -220,7 +220,7 @@ menu)
 		--separator="|" \
 		false menu-install "1) Install ACE/SmartSoft Development Environment" \
 		true miron-depend "2) Install MIRoN Dependencies"  \
-		true toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
+		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		true repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
 		true build-smartsoft "5) Build/Compile ACE/SmartSoft Development Environment" \
 	) || exit 1
@@ -259,7 +259,7 @@ menu-install)
 		--separator="|" \
 		true package-install "1.1) Install system packages required for ACE/SmartSoft" \
 		true ace-source-install "1.2) Install ACE from source" \
-		true repo-co-smartsoft "1.3) Checkout ACE/MIRoN repository and set environment variables" \
+		true repo-co-smartsoft "1.3) Clone repositories and set environment variables" \
 	) || abort
 
 
@@ -290,9 +290,9 @@ package-install)
 	system_upgrade
 
 	progressbarinfo "Installing packages ..."
-	check_sudo
+	
 	# General packages:
-	sudo apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
+	apt-get -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
  meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libopencv-dev \
  build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
  lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
@@ -301,22 +301,22 @@ package-install)
 
 	# 12.04 packages
 	if [ "$OS_PRECISE" = true ]; then
-		sudo apt -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
+		apt-get -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
 	fi
 
 	# Other packages to install - except for raspberry pi:
 	if [ "$OS_RASPBIAN" = true ]; then 
-		sudo apt -y install libwxgtk2.8-dev || askabort
+		apt-get -y install libwxgtk2.8-dev || askabort
 	fi
 
 	# Xenial (16.04 Packages)
 	if [ "$OS_XENIAL" = true ]; then
-		sudo apt -y install openjdk-8-jre libtbb-dev || askabort
+		apt-get -y install openjdk-8-jre libtbb-dev || askabort
 	fi
 
 	# Bionic (18.04 Packages)
 	if [ "$OS_BIONIC" = true ]; then
-		sudo apt -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
+		apt-get -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
 	fi
 
 	exit 0
@@ -331,8 +331,7 @@ ace-source-install)
 	fi
 
 	progressbarinfo "Running ACE source install (will take some time)"
-	check_sudo 
-
+	
 	sleep 2
 	wget -nv https://raw.githubusercontent.com/MiRON-project/AceSmartSoftFramework/master/INSTALL-ACE-6.5.8.sh -O /tmp/INSTALL-ACE-6.5.8.sh || askabort
 	chmod +x /tmp/INSTALL-ACE-6.5.8.sh || askabort
@@ -371,22 +370,22 @@ repo-co-smartsoft)
 	clone_repos SmartSoftComponentDeveloperAPIcpp https://github.com/Servicerobotics-Ulm/SmartSoftComponentDeveloperAPIcpp.git || askabort
 	
 	progressbarinfo "Cloning repositories AceSmartSoftFramework.git"
-	clone_repos AceSmartSoftFramework "https://github.com/MiRON-project/AceSmartSoftFramework.git" || askabort
+	clone_repos AceSmartSoftFramework "https://github.com/Servicerobotics-Ulm/AceSmartSoftFramework.git" || askabort
 	
 	progressbarinfo "Cloning repositories UtilityRepository.git"
-	clone_repos UtilityRepository "https://github.com/MiRON-project/UtilityRepository.git" || askabort
+	clone_repos UtilityRepository "https://github.com/Servicerobotics-Ulm/UtilityRepository.git" || askabort
 	
 	progressbarinfo "Cloning repositories DataRepository.git"
-	clone_repos DataRepository "https://github.com/MiRON-project/DataRepository.git" || askabort
+	clone_repos DataRepository "https://github.com/Servicerobotics-Ulm/DataRepository.git" || askabort
 	
 	progressbarinfo "Cloning repositories DomainModelsRepositories.git"
 	clone_repos DomainModelsRepositories https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
 	
 	progressbarinfo "Cloning repositories ComponentRepository.git"
-	clone_repos ComponentRepository https://github.com/MiRON-project/ComponentRepository.git || askabort
+	clone_repos ComponentRepository https://github.com/Servicerobotics-Ulm/ComponentRepository.git || askabort
 	
 	progressbarinfo "Cloning repositories SystemRepository.git"
-	clone_repos SystemRepository https://github.com/MiRON-project/SystemRepository.git || askabort
+	clone_repos SystemRepository https://github.com/Servicerobotics-Ulm/SystemRepository.git || askabort
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
@@ -395,28 +394,60 @@ repo-co-smartsoft)
 
 ###############################################################################
 miron-depend)
-	if [ "$(id -u)" != "0" ]; then
-		sudo bash $SCRIPT_NAME $1
-		exit 0
+	
+	# Clone Dependencies
+	mkdir -p $HOME/dev && cd $HOME/dev || askabort
+	
+	WEBOTS_EXEC="$HOME/dev/webots/webots"
+	WEBOTS_DIR="$HOME/dev/webots/"
+	if [[ ! -x "$(command -v webots)" ]]; then 
+		if [[ ! -f "${WEBOTS_EXEC}" ]]; then 
+			if [[ ! -d "${WEBOTS_DIR}" ]]; then
+				clone_repos webots https://github.com/MiRON-project/webots.git || askabort
+			else
+				echo "You have webots folder in $HOME/dev/. And it is not properly installed. Remove it and run the script again."
+				echo "Aborting..."
+				sleep 5
+				abort
+			fi
+		else
+			echo "--found Webots. Just make sure to export WEBOTS_HOME variable properly in the ~/.profile file."	
+			echo "Instructions in https://github.com/MiRON-project/DataRepository"
+		fi
+	else
+		echo "--found Webots. Just make sure to export WEBOTS_HOME variable properly in the ~/.profile file."
+		echo "Instructions in https://github.com/MiRON-project/DataRepository"
 	fi
 
+	MRPT_PATH="$HOME/dev/mrpt/"
+	if [ ! -d "${MRPT_PATH}" ]; then
+		clone_repos mrpt https://github.com/MiRON-project/mrpt.git || askabort
+	else
+		echo "You have mrpt folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
+	fi
+	
+	MOOD2BE_HOME="$HOME/dev/MOOD2Be"
+	if [ ! -d "$MOOD2BE_HOME" ]; then
+		clone_repos MOOD2Be https://github.com/MiRON-project/MOOD2Be 
+	else
+		echo "You have MOOD2Be folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
+	fi
+	
 	progressbarinfo "Installing MIRoN Dependencies"
-	check_sudo
 
 	sleep 2
 
 	progressbarinfo "Building Webots Simulator"
-	WEBOTS_EXEC=~/dev/webots/webots
-	if ! [ -x "$(command -v webots)" ] || ! [ -x "$(command -v \$WEBOTS_EXEC/webots)" ]; then
-		mkdir -p ~/dev && cd ~/dev || askabort
-		sudo apt -y install git g++ cmake execstack libusb-dev swig \
+	if [ ! -x "$(command -v webots)" ] && [ ! -f "$WEBOTS_EXEC" ]; then
+		check_sudo
+		sudo apt-get -y install git g++ cmake execstack libusb-dev swig \
 python2.7-dev libglu1-mesa-dev libglib2.0-dev libfreeimage-dev \
 libfreetype6-dev libxml2-dev libzzip-0-13 libboost-dev libavcodec-extra \
 libgd-dev libssh-gcrypt-dev libzip-dev python-pip libreadline-dev \
 libassimp-dev pbzip2 libpci-dev || askabort
-		apt -y install libssl-dev ffmpeg python3.6-dev \
+		sudo apt-get -y install libssl-dev ffmpeg python3.6-dev \
 python3.7-dev || askabort
-		git clone --recurse-submodules https://github.com/cyberbotics/webots.git || askabort
+		cd $HOME/dev || askabort
 		cd webots && make || askabort
 		echo "export WEBOTS_HOME=\$HOME/dev/webots" >> ~/.profile
 	fi
@@ -426,40 +457,51 @@ python3.7-dev || askabort
 	if [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 8"* ]] || [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 9"* ]]; then
 		echo "-- found Gazebo 8 or greater"
 	else
-		sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
-		wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - || askabort
-		sudo apt -y update || askabort
-		sudo apt -y install gazebo9 || askabort
-		sudo apt -y install libgazebo9-dev || askabort
-		GAZEBO_SETUP=/usr/share/gazebo/setup.sh
-		if ! [-f "$GAZEBO_SETUP" ]; then
-			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> GAZEBO_SETUP
-			echo "export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org" >> GAZEBO_SETUP
-			echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9:\${GAZEBO_RESOURCE_PATH}" >> GAZEBO_SETUP
-			echo "export GAZEBO_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gazebo-9/plugins:\${GAZEBO_PLUGIN_PATH}" >> GAZEBO_SETUP
-			echo "export GAZEBO_MODEL_PATH=/usr/share/gazebo-9/models:\${GAZEBO_MODEL_PATH}" >> GAZEBO_SETUP
-			echo "export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:/usr/lib/x86_64-linux-gnu/gazebo-9/plugins" >> GAZEBO_SETUP
-			echo "export OGRE_RESOURCE_PATH=/usr/lib/x86_64-linux-gnu/OGRE-1.9.0" >> GAZEBO_SETUP
+		check_sudo
+		sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
+		wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - || askabort
+		system_upgrade
+		sudo apt-get -y install gazebo9 || askabort
+		sudo apt-get -y install libgazebo9-dev || askabort
+		GAZEBO_SETUP="/usr/share/gazebo/setup.sh"
+		if [ ! -f "$GAZEBO_SETUP" ]; then
+			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> $GAZEBO_SETUP
+			echo "export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org" >> $GAZEBO_SETUP
+			echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9:\${GAZEBO_RESOURCE_PATH}" >> $GAZEBO_SETUP
+			echo "export GAZEBO_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gazebo-9/plugins:\${GAZEBO_PLUGIN_PATH}" >> $GAZEBO_SETUP
+			echo "export GAZEBO_MODEL_PATH=/usr/share/gazebo-9/models:\${GAZEBO_MODEL_PATH}" >> $GAZEBO_SETUP
+			echo "export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:/usr/lib/x86_64-linux-gnu/gazebo-9/plugins" >> $GAZEBO_SETUP
+			echo "export OGRE_RESOURCE_PATH=/usr/lib/x86_64-linux-gnu/OGRE-1.9.0" >> $GAZEBO_SETUP
 		fi
 	fi
 
-	progressbarinfo "Building MRPT dependency"
-	MRPT_PATH=~/dev/mrpt
-	if ! [ -d "$MRPT_PATH" ]; then
-		mkdir -p ~/dev && cd ~/dev || askabort
-		sudo apt -y install build-essential pkg-config cmake \ 
-libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
-		sudo apt -y install libftdi-dev freeglut3-dev zlib1g-dev \
-libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev 
-libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
-liboctomap-dev || askabort
-		git clone https://github.com/MiRON-project/mrpt.git || askabort
-		cd ~/dev/mrpt && mkdir -p build && cd build || askabort
-		cmake .. || askabort
-		make || askabort
-		ln -s ~/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
+	progressbarinfo "Building MRPT"
+	if [ ! -d "$MRPT_PATH/build" ]; then
+		check_sudo
+		sudo apt-get -y install build-essential pkg-config cmake \
+	libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
+		sudo apt-get -y install libftdi-dev freeglut3-dev zlib1g-dev \
+	libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
+	libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
+	liboctomap-dev || askabort
+		mkdir -p $MRPT_PATH/build
+		cd $MRPT_PATH/build 
+		cmake .. || ( rm -rf $MRPT_PATH/build && askabort )
+		make || (rm -rf $MRPT_PATH/build && askabort)
+		ln -s $HOME/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
 		echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
+	else
+		echo "Skipping MRPT build because there is a build folder. Remove it and start the script again if you want to reinstall."
 	fi
+
+	progressbarinfo "Building MOOD2Be"
+	if [ ! -d "$MOOD2BE_HOME/build" ]; then
+		mkdir -p $MOOD2BE_HOME/build 
+		cd $MOOD2BE_HOME/build 
+		cmake .. || (rm -rf $MOOD2BE_HOME/build && askabort)
+		make || (rm -rf $MOOD2BE_HOME/build && askabort)
+		echo "export MOOD2BE_DIR=\$HOME/dev/MOOD2Be/build" >> ~/.profile
+	fi 
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
@@ -530,6 +572,7 @@ build-smartsoft)
 	echo -e "\n\n\n### Running Build ACE/SmartSoft ...\n\n\n"
 	sleep 2
 
+	source ~/.profile
 	progressbarinfo "Running Build ACE/SmartSoft SmartSoftComponentDeveloperAPIcpp ..."
 	cd $SMART_ROOT_ACE/repos/SmartSoftComponentDeveloperAPIcpp || askabort
 	mkdir build
@@ -572,13 +615,13 @@ build-smartsoft)
 ###############################################################################
 toolchain-update)
 	progressbarinfo "Running toolchain installation ..."
-	check_sudo
 	# check if OpenJDK 8 is installed (autoinstall it if needed)
 	if [[ $(java -version 2>&1) == "openjdk version \"1.8"* ]] || [[ $(java -version 2>&1) == "openjdk version \"11."* ]]; then
 		echo "-- found OpenJDK 1.8 or greater"
 	else
 		progressbarinfo "Installing dependency OpenJDK 8 ..."
-		sudo apt install -y openjdk-8-jre || askabort
+		check_sudo
+		sudo apt-get install -y openjdk-8-jre || askabort
 	fi
 
 	progressbarinfo "Downloading the SmartMDSD Toolchain archive from: $TOOLCHAIN_URL"
