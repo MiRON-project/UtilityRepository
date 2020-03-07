@@ -489,6 +489,7 @@ python3.7-dev || askabort
 		cmake .. || ( rm -rf $MRPT_PATH/build && askabort )
 		make || (rm -rf $MRPT_PATH/build && askabort)
 		ln -s $HOME/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
+		mv ~/SOFTWARE/smartsoft/lib/lib ~/SOFTWARE/smartsoft/lib/mrpt || askabort
 		echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
 	else
 		echo "Skipping MRPT build because there is a build folder. Remove it and start the script again if you want to reinstall."
@@ -575,7 +576,7 @@ build-smartsoft)
 	source ~/.profile
 	progressbarinfo "Running Build ACE/SmartSoft SmartSoftComponentDeveloperAPIcpp ..."
 	cd $SMART_ROOT_ACE/repos/SmartSoftComponentDeveloperAPIcpp || askabort
-	mkdir build
+	mkdir -p build
 	cd build || askabort
 	cmake ..
 	make install || askabort
@@ -583,28 +584,28 @@ build-smartsoft)
 	progressbarinfo "Running Build ACE/SmartSoft Kernel ..."
 	# warkaround for the case when the kernel is not built automatically as external dependency
 	cd $SMART_ROOT_ACE/repos/AceSmartSoftFramework || askabort
-	mkdir build
+	mkdir -p build
 	cd build || askabort
 	cmake ..
 	make install || askabort
 
 	progressbarinfo "Running Build Utilities"
 	cd $SMART_ROOT_ACE/repos/UtilityRepository || askabort
-	mkdir build
+	mkdir -p build
 	cd build || askabort
 	cmake ..
 	make || askabort
 
 	progressbarinfo "Running Build DomainModels"
 	cd $SMART_ROOT_ACE/repos/DomainModelsRepositories || askabort
-	mkdir build
+	mkdir -p build
 	cd build || askabort
 	cmake ..
 	make || askabort
 
 	progressbarinfo "Running Build Components"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
-	mkdir build
+	mkdir -p build
 	cd build || askabort
 	cmake ..
 	make || askabort
