@@ -476,33 +476,27 @@ python3.7-dev || askabort
 	fi
 
 	progressbarinfo "Building MRPT"
-	if [ ! -d "$MRPT_PATH/build" ]; then
-		check_sudo
-		sudo apt-get -y install build-essential pkg-config cmake \
+	check_sudo
+	sudo apt-get -y install build-essential pkg-config cmake \
 	libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
 		sudo apt-get -y install libftdi-dev freeglut3-dev zlib1g-dev \
-	libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
+	sudo apt-get -y libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
 	libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
 	liboctomap-dev || askabort
-		mkdir -p $MRPT_PATH/build
-		cd $MRPT_PATH/build 
-		cmake .. || ( rm -rf $MRPT_PATH/build && askabort )
-		make || (rm -rf $MRPT_PATH/build && askabort)
-		ln -s $HOME/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
-		mv ~/SOFTWARE/smartsoft/lib/lib ~/SOFTWARE/smartsoft/lib/mrpt || askabort
-		echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
-	else
-		echo "Skipping MRPT build because there is a build folder. Remove it and start the script again if you want to reinstall."
-	fi
-
+	mkdir -p $MRPT_PATH/build
+	cd $MRPT_PATH/build 
+	cmake .. || ( rm -rf $MRPT_PATH/build && askabort )
+	make || (rm -rf $MRPT_PATH/build && askabort)
+	ln -s $HOME/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
+	mv ~/SOFTWARE/smartsoft/lib/lib ~/SOFTWARE/smartsoft/lib/mrpt || askabort
+	echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
+	
 	progressbarinfo "Building MOOD2Be"
-	if [ ! -d "$MOOD2BE_HOME/build" ]; then
-		mkdir -p $MOOD2BE_HOME/build 
-		cd $MOOD2BE_HOME/build 
-		cmake .. || (rm -rf $MOOD2BE_HOME/build && askabort)
-		make || (rm -rf $MOOD2BE_HOME/build && askabort)
-		echo "export MOOD2BE_DIR=\$HOME/dev/MOOD2Be/build" >> ~/.profile
-	fi 
+	mkdir -p $MOOD2BE_HOME/build 
+	cd $MOOD2BE_HOME/build 
+	cmake .. || (rm -rf $MOOD2BE_HOME/build && askabort)
+	make || (rm -rf $MOOD2BE_HOME/build && askabort)
+	echo "export MOOD2BE_DIR=\$HOME/dev/MOOD2Be/build" >> ~/.profile
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
