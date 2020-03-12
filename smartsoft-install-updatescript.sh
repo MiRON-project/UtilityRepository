@@ -545,7 +545,10 @@ repo-up-smartsoft)
 	progressbarinfo "Running ACE/SmartSoft repo update DomainModelsRepositories"
 	cd $SMART_ROOT_ACE/repos/DomainModelsRepositories || askabort
 	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/DomainModelsRepositories.git" || askabort
+	switch_master_branch "miron" "master"
 	git pull || askabort
+	git submodule update --recursive || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update ComponentRepository"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
