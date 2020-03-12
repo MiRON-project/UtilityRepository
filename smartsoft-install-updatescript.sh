@@ -532,6 +532,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
+	git submodule update --recursive || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DataRepository"
 	cd $SMART_ROOT_ACE/repos/DataRepository || askabort
@@ -539,6 +540,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
+	git submodule update --recursive || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update DomainModelsRepositories"
 	cd $SMART_ROOT_ACE/repos/DomainModelsRepositories || askabort
@@ -551,6 +553,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
+	git submodule update --recursive || askabort
 
 	progressbarinfo "Running ACE/SmartSoft repo update SystemRepository"
 	cd $SMART_ROOT_ACE/repos/SystemRepository || askabort
@@ -558,6 +561,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
+	git submodule update --recursive || askabort
 
 	exit 0
 ;;
