@@ -387,6 +387,9 @@ repo-co-smartsoft)
 	progressbarinfo "Cloning repositories SystemRepository.git"
 	clone_repos SystemRepository https://github.com/Servicerobotics-Ulm/SystemRepository.git || askabort
 
+	progressbarinfo "Cloning repositories BehaviorRepository.git"
+	clone_repos BehaviorRepository https://github.com/MiRON-project/BehaviorRepository.git || askabort
+
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
 	exit 0
@@ -516,17 +519,17 @@ repo-up-smartsoft)
 		exit 0
 	fi
 
-	progressbarinfo "Running ACE/SmartSoft repo update SmartSoftComponentDeveloperAPIcpp"
+	progressbarinfo "Updating SmartSoftComponentDeveloperAPIcpp..."
 	cd $SMART_ROOT_ACE/repos/SmartSoftComponentDeveloperAPIcpp || askabort
 	git reset --hard HEAD
 	git pull || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update AceSmartSoftFramework"
+	progressbarinfo "Updating AceSmartSoftFramework..."
 	cd $SMART_ROOT_ACE/repos/AceSmartSoftFramework || askabort
 	git reset --hard HEAD
 	git pull || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update UtilityRepository"
+	progressbarinfo "Updating UtilityRepository..."
 	cd $SMART_ROOT_ACE/repos/UtilityRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
@@ -534,7 +537,7 @@ repo-up-smartsoft)
 	git pull || askabort
 	git submodule update --recursive || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update DataRepository"
+	progressbarinfo "Updating DataRepository..."
 	cd $SMART_ROOT_ACE/repos/DataRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
@@ -542,7 +545,7 @@ repo-up-smartsoft)
 	git pull || askabort
 	git submodule update --recursive || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update DomainModelsRepositories"
+	progressbarinfo "Updating DomainModelsRepositories..."
 	cd $SMART_ROOT_ACE/repos/DomainModelsRepositories || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/DomainModelsRepositories.git" || askabort
@@ -550,7 +553,7 @@ repo-up-smartsoft)
 	git pull || askabort
 	git submodule update --recursive || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update ComponentRepository"
+	progressbarinfo "Updating ComponentRepository..."
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
@@ -558,10 +561,18 @@ repo-up-smartsoft)
 	git pull || askabort
 	git submodule update --recursive || askabort
 
-	progressbarinfo "Running ACE/SmartSoft repo update SystemRepository"
+	progressbarinfo "Updating SystemRepository..."
 	cd $SMART_ROOT_ACE/repos/SystemRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
+	switch_master_branch "miron" "master"
+	git pull || askabort
+	git submodule update --recursive || askabort
+
+	progressbarinfo "Updating BehaviorRepository..."
+	cd $SMART_ROOT_ACE/repos/BehaviorRepository || askabort
+	git reset --hard HEAD
+	create_remote_miron "https://github.com/MiRON-project/BehaviorRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
 	git submodule update --recursive || askabort
