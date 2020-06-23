@@ -142,9 +142,9 @@ function check_sudo() {
 function system_upgrade() {
 	check_sudo
 	sleep 2
-	sudo apt-get -y update  || askabort
-	sudo apt-get -y upgrade || askabort
-	sudo apt-get -y autoremove || askabort
+	sudo apt -y update  || askabort
+	sudo apt -y upgrade || askabort
+	sudo apt -y autoremove || askabort
 }
 
 function create_remote_miron() {
@@ -187,12 +187,12 @@ fi
 
 if [ ! -x "$(command -v xterm)" ]; then
 	check_sudo
-	apt-get -y install xterm
+	apt -y install xterm
 fi
 
 if [ ! -x "$(command -v zenity)" ]; then
 	check_sudo
-	apt-get -y install zenity
+	apt -y install zenity
 fi
 
 case "$BCMD" in
@@ -292,7 +292,7 @@ package-install)
 	progressbarinfo "Installing packages ..."
 	
 	# General packages:
-	apt-get -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
+	apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
  meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libopencv-dev \
  build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
  lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
@@ -301,22 +301,22 @@ package-install)
 
 	# 12.04 packages
 	if [ "$OS_PRECISE" = true ]; then
-		apt-get -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
+		apt -y install libwxgtk2.8-dev openjdk-6-jre libtbb-dev || askabort
 	fi
 
 	# Other packages to install - except for raspberry pi:
 	if [ "$OS_RASPBIAN" = true ]; then 
-		apt-get -y install libwxgtk2.8-dev || askabort
+		apt -y install libwxgtk2.8-dev || askabort
 	fi
 
 	# Xenial (16.04 Packages)
 	if [ "$OS_XENIAL" = true ]; then
-		apt-get -y install openjdk-8-jre libtbb-dev || askabort
+		apt -y install openjdk-8-jre libtbb-dev || askabort
 	fi
 
 	# Bionic (18.04 Packages)
 	if [ "$OS_BIONIC" = true ]; then
-		apt-get -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
+		apt -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
 	fi
 
 	exit 0
@@ -443,12 +443,12 @@ miron-depend)
 	progressbarinfo "Building Webots Simulator"
 	if [ ! -x "$(command -v webots)" ] && [ ! -f "$WEBOTS_EXEC" ]; then
 		check_sudo
-		sudo apt-get -y install git g++ cmake execstack libusb-dev swig \
+		sudo apt -y install git g++ cmake execstack libusb-dev swig \
 python2.7-dev libglu1-mesa-dev libglib2.0-dev libfreeimage-dev \
 libfreetype6-dev libxml2-dev libzzip-0-13 libboost-dev libavcodec-extra \
 libgd-dev libssh-gcrypt-dev libzip-dev python-pip libreadline-dev \
 libassimp-dev pbzip2 libpci-dev || askabort
-		sudo apt-get -y install libssl-dev ffmpeg python3.6-dev \
+		sudo apt -y install libssl-dev ffmpeg python3.6-dev \
 python3.7-dev || askabort
 		cd $HOME/dev || askabort
 		cd webots && make || askabort
@@ -464,8 +464,8 @@ python3.7-dev || askabort
 		sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
 		wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - || askabort
 		system_upgrade
-		sudo apt-get -y install gazebo9 || askabort
-		sudo apt-get -y install libgazebo9-dev || askabort
+		sudo apt -y install gazebo9 || askabort
+		sudo apt -y install libgazebo9-dev || askabort
 		GAZEBO_SETUP="/usr/share/gazebo/setup.sh"
 		if [ ! -f "$GAZEBO_SETUP" ]; then
 			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> $GAZEBO_SETUP
@@ -480,10 +480,10 @@ python3.7-dev || askabort
 
 	progressbarinfo "Building MRPT"
 	check_sudo
-	sudo apt-get -y install build-essential pkg-config cmake \
+	sudo apt -y install build-essential pkg-config cmake \
 	libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
-		sudo apt-get -y install libftdi-dev freeglut3-dev zlib1g-dev \
-	sudo apt-get -y libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
+		sudo apt -y install libftdi-dev freeglut3-dev zlib1g-dev \
+	sudo apt -y libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
 	libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
 	liboctomap-dev || askabort
 	mkdir -p $MRPT_PATH/build
@@ -634,7 +634,7 @@ toolchain-update)
 	else
 		progressbarinfo "Installing dependency OpenJDK 8 ..."
 		check_sudo
-		sudo apt-get install -y openjdk-8-jre || askabort
+		sudo apt install -y openjdk-8-jre || askabort
 	fi
 
 	progressbarinfo "Downloading the SmartMDSD Toolchain archive from: $TOOLCHAIN_URL"
