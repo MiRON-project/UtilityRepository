@@ -354,7 +354,7 @@ repo-co-smartsoft)
 	sleep 2
 
 	mkdir -p ~/SOFTWARE/smartsoft-ace-mdsd-v3/repos || askabort
-	ln -s ~/SOFTWARE/smartsoft-ace-mdsd-v3 ~/SOFTWARE/smartsoft || askabort
+	ln -sfn ~/SOFTWARE/smartsoft-ace-mdsd-v3 ~/SOFTWARE/smartsoft || askabort
 	mkdir -p ~/SOFTWARE/smartsoft-ace-mdsd-v3/lib || askabort
 
 	echo "export ACE_ROOT=/opt/ACE_wrappers" >> ~/.profile
