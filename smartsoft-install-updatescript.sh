@@ -158,6 +158,7 @@ function switch_master_branch() {
 	if [ ! -n "$(git branch --list master)" ]; then
 		git checkout -b master --track $1/$2 
 	else
+		git reset --hard $1/$2
 		git branch master -u $1/$2
 	fi	
 }
