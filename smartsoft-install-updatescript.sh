@@ -220,10 +220,10 @@ menu)
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
 		false menu-install "1) Install ACE/SmartSoft Development Environment" \
-		true miron-depend "2) Install MIRoN Dependencies"  \
+		false miron-depend "2) Install MIRoN Dependencies"  \
 		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
-		true repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
-		true build-smartsoft "5) Build/Compile ACE/SmartSoft Development Environment" \
+		false repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
+		false build-smartsoft "5) Build/Compile ACE/SmartSoft Development Environment" \
 	) || exit 1
 
 	CMD=""
