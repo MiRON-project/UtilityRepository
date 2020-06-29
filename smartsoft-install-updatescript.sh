@@ -223,7 +223,7 @@ menu)
 		false miron-depend "2) Install MIRoN Dependencies"  \
 		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		false repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
-		false build-smartsoft "5) Build/Compile ACE/SmartSoft Development Environment" \
+		false build-smartsoft "5) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Rum Code-Generation before)" \
 	) || exit 1
 
 	CMD=""
@@ -258,9 +258,10 @@ menu-install)
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
-		true package-install "1.1) Install system packages required for ACE/SmartSoft" \
-		true ace-source-install "1.2) Install ACE from source" \
-		true repo-co-smartsoft "1.3) Clone repositories and set environment variables" \
+		false package-install "1.1) Install system packages required for ACE/SmartSoft" \
+		false ace-source-install "1.2) Install ACE from source" \
+		false roqme-depend "1.3) RoQME Dependencies: OpenSliceDDS, GTK 2 and MPC" \
+		false repo-co-smartsoft "1.4) Clone repositories and set environment variables" \
 	) || abort
 
 
@@ -344,13 +345,51 @@ ace-source-install)
 ;;
 
 ###############################################################################
+roqme-depend)
+	# become root
+	if [ "$(id -u)" != "0" ]; then
+		sudo bash $SCRIPT_NAME $1
+		exit 0
+	fi
+
+	progressbarinfo "Running OpenSliceDDS/MPC (will take some time)"
+	sleep 2
+
+	# OpenSlice DDS
+	wget -nv https://github.com/ADLINK-IST/opensplice/releases/download/OSPL_V6_9_190403OSS_RELEASE/PXXX-VortexOpenSplice-6.9.190403OSS-HDE-x86_64.linux-gcc7-glibc2.27-installer.tar.gz -O /tmp/OSPL_V6_9_190403OSS_RELEASE.tar.gz || askabort
+	mkdir -p ~/SOFTWARE/smartsoft/OpenSpliceDDS || askabort
+	tar -C ~/SOFTWARE/smartsoft/OpenSpliceDDS -zxvf /tmp/OSPL_V6_9_190403OSS_RELEASE.tar.gz || askabort
+	sed -i '18iOSPL_HOME=$HOME/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux"' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
+	sed -i '1i#RoQME OpenSpliceDDS"' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
+	cat ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com >> ~/.profile || askabort
+	source ~/.profile || askabort
+	make -C $OSPL_HOME/custom_lib -f Makefile.Build_DCPS_ISO_Cpp2_Lib 
+	
+	# MPC
+	git clone https://github.com/DOCGroup/MPC ~/SOFTWARE/smartsoft || askabort
+	echo "export MPC_ROOT=$HOME/SOFTWARE/smartsoft/MPC" >> ~/.profile
+	source ~/.profile
+	sed -i '7i--launcher.GTK_version' ~/SOFTWARE/SmartMDSD-Toolchain-v3.12/eclipse.ini || askabort
+	sed -i '8i2' ~/SOFTWARE/SmartMDSD-Toolchain-v3.12/eclipse.ini || askabort
+
+	# RoQME
+	wget -nv https://github.com/roqme/robmosys-roqme-itp/raw/master/downloads/RoQME-Eclipse-Tools-v1.0_201904030901.zip -O /tmp/roqme.zip || askabort
+	mkdir -p ~/SOFTWARE/smartsoft/RoQME || askabort
+	unzip /tmp/roqme.zip -d ~/SOFTWARE/smartsoft/RoQME || askabort
+	echo "export ROQME_ROOT=$HOME/SOFTWARE/smartsoft/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp" >> ~/.profile
+	echo "export LD_LIBRARY_PATH=$ROQME_ROOT/roqmeDDS/lib:$LD_LIBRARY_PATH" >> ~/.profile
+	echo "export CPATH=$ROQME_ROOT/roqmeDDS/include:$ROQME_ROOT/roqmeDDS/idl:$CPATH" >> ~/.profile
+	exit 0
+;;
+
+###############################################################################
 
 
 ###############################################################################
-# checkout MIRoN repository
+# Clone Servicerobotics-Ulm repositories from MIRON Organization
 repo-co-smartsoft)
 
-	progressbarinfo "Cloning repositories and Building Dependencies"
+	progressbarinfo "Cloning Servicerobotics-Ulm repositories from MIRON or Servicerobotics-Ulm Organizations"
 
 	sleep 2
 
@@ -509,7 +548,7 @@ python3.7-dev || askabort
 
 ###############################################################################
 repo-up-smartsoft)
-	echo -e "\n\n\n### Running ACE/MIRoN repo update ...\n\n\n"
+	echo -e "\n\n\n### Running MIRoN repositories update ...\n\n\n"
 	progressbarinfo "About to update repositories ..."
 	sleep 2
 
@@ -583,7 +622,7 @@ repo-up-smartsoft)
 
 ###############################################################################
 build-smartsoft)
-	echo -e "\n\n\n### Running Build ACE/SmartSoft ...\n\n\n"
+	echo -e "\n\n\n### Running Build ACE/SmartSoft, Utilities, DomainModels and Components...\n\n\n"
 	sleep 2
 
 	source ~/.profile
@@ -615,6 +654,13 @@ build-smartsoft)
 	cd build || askabort
 	cmake ..
 	make || askabort
+
+	# The roqmeDDS
+	progressbarinfo "RoQME DDS"
+	cd $SMART_ROOT_ACE/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp/roqmeDDS || askabort
+	chmod +777 gen_makefile.sh
+	./gen_makefile.sh
+	make
 
 	progressbarinfo "Running Build Components"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
