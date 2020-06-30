@@ -660,9 +660,9 @@ build-smartsoft)
 	# The roqmeDDS
 	progressbarinfo "RoQME DDS"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp/roqmeDDS || askabort
-	chmod +777 gen_makefile.sh
-	./gen_makefile.sh
-	make
+	chmod +777 gen_makefile.sh || askabort
+	./gen_makefile.sh || askabort
+	make || askabort
 
 	progressbarinfo "Running Build Components"
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
