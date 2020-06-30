@@ -223,7 +223,7 @@ menu)
 		false miron-depend "2) Install MIRoN Dependencies"  \
 		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		false repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
-		false build-smartsoft "5) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Rum Code-Generation before)" \
+		false build-smartsoft "5) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Run Code-Generation before)" \
 	) || exit 1
 
 	CMD=""
