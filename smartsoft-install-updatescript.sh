@@ -359,14 +359,15 @@ roqme-depend)
 	wget -nv https://github.com/ADLINK-IST/opensplice/releases/download/OSPL_V6_9_190403OSS_RELEASE/PXXX-VortexOpenSplice-6.9.190403OSS-HDE-x86_64.linux-gcc7-glibc2.27-installer.tar.gz -O /tmp/OSPL_V6_9_190403OSS_RELEASE.tar.gz || askabort
 	mkdir -p ~/SOFTWARE/smartsoft/OpenSpliceDDS || askabort
 	tar -C ~/SOFTWARE/smartsoft/OpenSpliceDDS -zxvf /tmp/OSPL_V6_9_190403OSS_RELEASE.tar.gz || askabort
-	sed -i '18iOSPL_HOME=$HOME/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux"' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
-	sed -i '1i#RoQME OpenSpliceDDS"' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
+	sed -i '18iOSPL_HOME=$HOME/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
+	sed -i '1i#RoQME OpenSpliceDDS' ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com || askabort
 	cat ~/SOFTWARE/smartsoft/OpenSpliceDDS/HDE/x86_64.linux/release.com >> ~/.profile || askabort
 	source ~/.profile || askabort
 	make -C $OSPL_HOME/custom_lib -f Makefile.Build_DCPS_ISO_Cpp2_Lib 
 	
 	# MPC
 	git clone https://github.com/DOCGroup/MPC ~/SOFTWARE/smartsoft || askabort
+	echo "# MPC" >> ~/.profile
 	echo "export MPC_ROOT=$HOME/SOFTWARE/smartsoft/MPC" >> ~/.profile
 	source ~/.profile
 	sed -i '7i--launcher.GTK_version' ~/SOFTWARE/SmartMDSD-Toolchain-v3.12/eclipse.ini || askabort
