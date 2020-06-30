@@ -418,7 +418,7 @@ repo-co-smartsoft)
 	clone_repos UtilityRepository "https://github.com/Servicerobotics-Ulm/UtilityRepository.git" || askabort
 	
 	progressbarinfo "Cloning repositories DataRepository.git"
-	clone_repos DataRepository "https://github.com/Servicerobotics-Ulm/DataRepository.git" || askabort
+	clone_repos DataRepository "https://github.com/MiRON-project/DataRepository.git" || askabort
 	
 	progressbarinfo "Cloning repositories DomainModelsRepositories.git"
 	clone_repos DomainModelsRepositories https://github.com/Servicerobotics-Ulm/DomainModelsRepositories.git || askabort
