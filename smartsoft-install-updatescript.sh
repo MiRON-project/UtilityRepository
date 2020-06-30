@@ -366,7 +366,8 @@ roqme-depend)
 	make -C $OSPL_HOME/custom_lib -f Makefile.Build_DCPS_ISO_Cpp2_Lib 
 	
 	# MPC
-	git clone https://github.com/DOCGroup/MPC ~/SOFTWARE/smartsoft || askabort
+	mkdir -p ~/SOFTWARE/smartsoft/MPC || askabort
+	git clone https://github.com/DOCGroup/MPC ~/SOFTWARE/smartsoft/MPC || askabort
 	echo "# MPC" >> ~/.profile
 	echo "export MPC_ROOT=$HOME/SOFTWARE/smartsoft/MPC" >> ~/.profile
 	source ~/.profile
