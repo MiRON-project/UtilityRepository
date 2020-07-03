@@ -497,29 +497,6 @@ python3.7-dev || askabort
 		echo "export WEBOTS_HOME=\$HOME/dev/webots" >> ~/.profile
 	fi
 
-	progressbarinfo "Building Gazebo Simulator"
-	# Check if Gazebo 8 or greater is installed (autoinstall it if needed)
-	if [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 8"* ]] || [[ $(gazebo -version 2>&1) == "Gazebo multi-robot simulator, version 9"* ]]; then
-		echo "-- found Gazebo 8 or greater"
-	else
-		check_sudo
-		sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' || askabort
-		wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add - || askabort
-		system_upgrade
-		sudo apt -y install gazebo9 || askabort
-		sudo apt -y install libgazebo9-dev || askabort
-		GAZEBO_SETUP="/usr/share/gazebo/setup.sh"
-		if [ ! -f "$GAZEBO_SETUP" ]; then
-			echo "export GAZEBO_MASTER_URI=http://localhost:11345" >> $GAZEBO_SETUP
-			echo "export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org" >> $GAZEBO_SETUP
-			echo "export GAZEBO_RESOURCE_PATH=/usr/share/gazebo-9:\${GAZEBO_RESOURCE_PATH}" >> $GAZEBO_SETUP
-			echo "export GAZEBO_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gazebo-9/plugins:\${GAZEBO_PLUGIN_PATH}" >> $GAZEBO_SETUP
-			echo "export GAZEBO_MODEL_PATH=/usr/share/gazebo-9/models:\${GAZEBO_MODEL_PATH}" >> $GAZEBO_SETUP
-			echo "export LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:/usr/lib/x86_64-linux-gnu/gazebo-9/plugins" >> $GAZEBO_SETUP
-			echo "export OGRE_RESOURCE_PATH=/usr/lib/x86_64-linux-gnu/OGRE-1.9.0" >> $GAZEBO_SETUP
-		fi
-	fi
-
 	progressbarinfo "Building MRPT"
 	check_sudo
 	sudo apt -y install build-essential pkg-config cmake \
