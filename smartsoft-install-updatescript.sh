@@ -665,7 +665,7 @@ build-smartsoft)
 	else
 		echo >> ~/.profile 
 		echo "# MOOD2BE" >> ~/.profile
-		echo "export MOOD2BE_DIR=\$SMART_ROOT_ACE/repos/DataRepository/MOOD2BE/build/Executor" >> ~/.profile
+		echo "export MOOD2BE_DIR=\$SMART_ROOT_ACE/repos/DataRepository/MOOD2Be/build/Executor" >> ~/.profile
 	fi
 
 	progressbarinfo "Building Groot"
