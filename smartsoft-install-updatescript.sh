@@ -471,17 +471,9 @@ miron-depend)
 		echo "You have mrpt folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
 	fi
 	
-	MOOD2BE_HOME="$HOME/dev/MOOD2Be"
-	if [ ! -d "$MOOD2BE_HOME" ]; then
-		clone_repos MOOD2Be https://github.com/MiRON-project/MOOD2Be 
-	else
-		echo "You have MOOD2Be folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
-	fi
-	
 	progressbarinfo "Installing MIRoN Dependencies"
-
 	sleep 2
-
+	
 	progressbarinfo "Building Webots Simulator"
 	if [ ! -x "$(command -v webots)" ] && [ ! -f "$WEBOTS_EXEC" ]; then
 		check_sudo
@@ -513,12 +505,6 @@ python3.7-dev || askabort
 	mv ~/SOFTWARE/smartsoft/lib/lib ~/SOFTWARE/smartsoft/lib/mrpt || askabort
 	echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
 	
-	progressbarinfo "Building MOOD2Be"
-	mkdir -p $MOOD2BE_HOME/build 
-	cd $MOOD2BE_HOME/build 
-	cmake .. || (rm -rf $MOOD2BE_HOME/build && askabort)
-	make || (rm -rf $MOOD2BE_HOME/build && askabort)
-	echo "export MOOD2BE_DIR=\$HOME/dev/MOOD2Be/build" >> ~/.profile
 
 	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
 
@@ -554,7 +540,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating DataRepository..."
 	cd $SMART_ROOT_ACE/repos/DataRepository || askabort
@@ -562,7 +548,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating DomainModelsRepositories..."
 	cd $SMART_ROOT_ACE/repos/DomainModelsRepositories || askabort
@@ -570,7 +556,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/DomainModelsRepositories.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating ComponentRepository..."
 	cd $SMART_ROOT_ACE/repos/ComponentRepository || askabort
@@ -578,7 +564,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating SystemRepository..."
 	cd $SMART_ROOT_ACE/repos/SystemRepository || askabort
@@ -586,7 +572,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating BehaviorRepository..."
 	cd $SMART_ROOT_ACE/repos/BehaviorRepository || askabort
@@ -594,7 +580,7 @@ repo-up-smartsoft)
 	create_remote_miron "https://github.com/MiRON-project/BehaviorRepository.git" || askabort
 	switch_master_branch "miron" "master"
 	git pull || askabort
-	git submodule update --recursive || askabort
+	git submodule update --init --recursive || askabort
 
 	exit 0
 ;;
@@ -603,6 +589,13 @@ repo-up-smartsoft)
 build-smartsoft)
 	echo -e "\n\n\n### Running Build ACE/SmartSoft, Utilities, DomainModels and Components...\n\n\n"
 	sleep 2
+
+	if zenity --question --width=800 --text="The installation script is about to build the repositories.\nThis <b>won't work</b> if you did not Run Code-Generator for each Package individually.\n\nDo you want to proceed, did you run Code-Generator in Smartsoft-Toolkit?\n\n."; then
+		echo -e "\n\n\n# Continuing with repo build.\n\n\n"
+	else
+		echo -e "\n\n\n# Not running repo build.\n\n\n"
+		exit 0
+	fi
 
 	source ~/.profile
 	progressbarinfo "Running Build ACE/SmartSoft SmartSoftComponentDeveloperAPIcpp ..."
@@ -647,6 +640,65 @@ build-smartsoft)
 	cd build || askabort
 	cmake ..
 	make || askabort
+
+	# Data Repo: MOOD2BE, Groot and ZMQBroker
+	progressbarinfo "Running Data Components"
+	
+	progressbarinfo "Building MOOD2Be"
+	MOOD2BE_HOME="$HOME/dev/MOOD2Be"
+	if [ ! -d "$MOOD2BE_HOME" ]; then
+		echo "You don't have MOOD2BE in dev/ folder. Thus you are running the latest script version"
+	else
+		echo "You have MOOD2Be folder in $HOME/dev/. This is not the latest script version. It will be removed from here and added to DataRepository"
+		rm -rf MOOD2BE_HOME
+		sed -i '/MOOD2BE_DIR/d' ~/.profile
+	fi
+	MOOD2BE_HOME="$SMART_ROOT_ACE/repos/DataRepository/MOOD2Be" 
+	MOOD2BE_DIR=$MOOD2BE_HOME/build
+	mkdir -p $MOOD2BE_DIR
+	cd $MOOD2BE_DIR
+	cmake .. || (rm -rf $MOOD2BE_DIR && askabort)
+	make || (rm -rf $MOOD2BE_DIR && askabort)
+	if grep -Fxq "# MOOD2BE" ~/.profile
+	then
+		:
+	else
+		echo >> ~/.profile 
+		echo "# MOOD2BE" >> ~/.profile
+		echo "export MOOD2BE_DIR=\$SMART_ROOT_ACE/repos/DataRepository/MOOD2BE/build/Executor" >> ~/.profile
+	fi
+
+	progressbarinfo "Building Groot"
+	GROOT_HOME="$SMART_ROOT_ACE/repos/DataRepository/Groot" 
+	GROOT_DIR=$GROOT_HOME/build
+	mkdir -p $GROOT_DIR
+	cd $GROOT_DIR
+	cmake .. || (rm -rf $GROOT_DIR && askabort)
+	make || (rm -rf $GROOT_DIR && askabort)
+	if grep -Fxq "# GROOT" ~/.profile
+	then
+		:
+	else
+		echo >> ~/.profile 
+		echo "# GROOT" >> ~/.profile
+		echo "export GROOT_DIR=\$SMART_ROOT_ACE/repos/DataRepository/Groot/build" >> ~/.profile
+	fi
+	
+	progressbarinfo "Building ZMQServer"
+	ZMQSERVER_HOME="$SMART_ROOT_ACE/repos/DataRepository/ZMQServer" 
+	ZMQSERVER_DIR=$ZMQSERVER_HOME/build
+	mkdir -p $ZMQSERVER_DIR
+	cd $ZMQSERVER_DIR
+	cmake .. || (rm -rf $ZMQSERVER_DIR && askabort)
+	make || (rm -rf $ZMQSERVER_DIR && askabort)
+	if grep -Fxq "# ZMQSERVER" ~/.profile
+	then
+		:
+	else
+		echo >> ~/.profile 
+		echo "# ZMQSERVER" >> ~/.profile
+		echo "export ZMQSERVER_DIR=\$SMART_ROOT_ACE/repos/DataRepository/ZMQServer/build" >> ~/.profile
+	fi
 
 	exit 0
 ;;
