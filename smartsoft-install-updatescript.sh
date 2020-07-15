@@ -294,10 +294,13 @@ package-install)
 	progressbarinfo "Installing packages ..."
 	
 	# General packages:
-	apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui subversion sbcl doxygen \
- meld expect wmctrl libopencv-dev libboost-all-dev libftdi-dev libopencv-dev \
- build-essential pkg-config freeglut3-dev zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev libswscale-dev \
- lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm libjansson-dev || askabort
+	apt -y install ssh-askpass git flex bison htop tree cmake cmake-curses-gui \
+ subversion sbcl doxygen meld expect wmctrl libopencv-dev libboost-all-dev \
+ libftdi-dev libopencv-dev build-essential pkg-config freeglut3-dev \
+ zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev \
+ libswscale-dev lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev \
+ vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm \
+ libjansson-dev libqt5*-dev || askabort
 
 	progressbarinfo "Installing OS-specific packages ..."
 
@@ -673,6 +676,7 @@ build-smartsoft)
 	GROOT_DIR=$GROOT_HOME/build
 	mkdir -p $GROOT_DIR
 	cd $GROOT_DIR
+	source ~/.profile || askabort
 	cmake .. || (rm -rf $GROOT_DIR && askabort)
 	make || (rm -rf $GROOT_DIR && askabort)
 	if grep -Fxq "# GROOT" ~/.profile
@@ -687,8 +691,9 @@ build-smartsoft)
 	progressbarinfo "Building ZMQServer"
 	ZMQSERVER_HOME="$SMART_ROOT_ACE/repos/DataRepository/ZMQServer" 
 	ZMQSERVER_DIR=$ZMQSERVER_HOME/build
-	mkdir -p $ZMQSERVER_DIR
-	cd $ZMQSERVER_DIR
+	mkdir -p $ZMQSERVER_DIR || askabort
+	cd $ZMQSERVER_DIR || askabort
+	source ~/.profile || askabort
 	cmake .. || (rm -rf $ZMQSERVER_DIR && askabort)
 	make || (rm -rf $ZMQSERVER_DIR && askabort)
 	if grep -Fxq "# ZMQSERVER" ~/.profile
