@@ -258,7 +258,7 @@ menu-install)
 		--column="" --column=Action --column=Description \
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
-		false package-install "1.1) Install system packages required for ACE/SmartSoft" \
+		false package-install "1.1) Install General Dependencies for ACE/SmartSoft/Miron" \
 		false ace-source-install "1.2) Install ACE from source" \
 		false roqme-depend "1.3) RoQME Dependencies: OpenSliceDDS, GTK 2 and MPC" \
 		false repo-co-smartsoft "1.4) Clone repositories and set environment variables" \
