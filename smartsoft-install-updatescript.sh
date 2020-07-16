@@ -372,7 +372,7 @@ roqme-depend)
 	mkdir -p ~/SOFTWARE/smartsoft/MPC || askabort
 	git clone https://github.com/DOCGroup/MPC ~/SOFTWARE/smartsoft/MPC || askabort
 	echo "# MPC" >> ~/.profile
-	echo "export MPC_ROOT=$HOME/SOFTWARE/smartsoft/MPC" >> ~/.profile
+	echo "export MPC_ROOT=\$HOME/SOFTWARE/smartsoft/MPC" >> ~/.profile
 	source ~/.profile
 	sed -i '7i--launcher.GTK_version' ~/SOFTWARE/SmartMDSD-Toolchain-v3.12/eclipse.ini || askabort
 	sed -i '8i2' ~/SOFTWARE/SmartMDSD-Toolchain-v3.12/eclipse.ini || askabort
@@ -381,9 +381,9 @@ roqme-depend)
 	wget -nv https://github.com/roqme/robmosys-roqme-itp/raw/master/downloads/RoQME-Eclipse-Tools-v1.0_201904030901.zip -O /tmp/roqme.zip || askabort
 	mkdir -p ~/SOFTWARE/smartsoft/RoQME || askabort
 	unzip /tmp/roqme.zip -d ~/SOFTWARE/smartsoft/RoQME || askabort
-	echo "export ROQME_ROOT=$HOME/SOFTWARE/smartsoft/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp" >> ~/.profile
-	echo "export LD_LIBRARY_PATH=$ROQME_ROOT/roqmeDDS/lib:$LD_LIBRARY_PATH" >> ~/.profile
-	echo "export CPATH=$ROQME_ROOT/roqmeDDS/include:$ROQME_ROOT/roqmeDDS/idl:$CPATH" >> ~/.profile
+	echo "export ROQME_ROOT=\$HOME/SOFTWARE/smartsoft/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp" >> ~/.profile
+	echo "export LD_LIBRARY_PATH=\$ROQME_ROOT/roqmeDDS/lib:\$LD_LIBRARY_PATH" >> ~/.profile
+	echo "export CPATH=\$ROQME_ROOT/roqmeDDS/include:\$ROQME_ROOT/roqmeDDS/idl:\$CPATH" >> ~/.profile
 	exit 0
 ;;
 
