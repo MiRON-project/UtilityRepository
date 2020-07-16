@@ -302,6 +302,14 @@ package-install)
  vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm \
  libjansson-dev libqt5*-dev || askabort
 
+	# Installing Gtest
+	cd /usr/src/gtest || askabort
+	mkdir -p build && cd build || askabort
+	cmake .. || askabort
+	make install || askabort
+	cd
+
+
 	progressbarinfo "Installing OS-specific packages ..."
 
 	# 12.04 packages
