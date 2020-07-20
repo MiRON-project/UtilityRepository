@@ -329,6 +329,7 @@ package-install)
 
 	# Bionic (18.04 Packages)
 	if [ "$OS_BIONIC" = true ]; then
+		apt -y install openjdk-8-jre openjdk-8-jdk || askabort
 		apt -y install openjdk-11-jre openjdk-11-jdk libtbb-dev || askabort
 	fi
 
@@ -640,6 +641,8 @@ build-smartsoft)
 
 	# The roqmeDDS
 	progressbarinfo "RoQME DDS"
+	check_sudo
+	update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 	cd $SMART_ROOT_ACE/repos/ComponentRepository/MIRON-Components/QoSMetricProvider/roqme-dds/cpp/roqmeDDS || askabort
 	chmod +777 gen_makefile.sh || askabort
 	./gen_makefile.sh || askabort
