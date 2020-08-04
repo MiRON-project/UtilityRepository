@@ -220,7 +220,7 @@ menu)
 		--hide-column=2 --print-column=2 --hide-header \
 		--separator="|" \
 		false menu-install "1) Install ACE/SmartSoft Development Environment" \
-		false miron-depend "2) Install MIRoN Dependencies"  \
+		false miron-dependencies "2) Install MIRoN Dependencies"  \
 		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
 		false repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
 		false build-smartsoft "5) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Run Code-Generation before)" \
@@ -444,17 +444,53 @@ repo-co-smartsoft)
 	progressbarinfo "Cloning repositories BehaviorRepository.git"
 	clone_repos BehaviorRepository https://github.com/MiRON-project/BehaviorRepository.git || askabort
 
-	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
+	zenity --info --width=400 --text="Environment settings in .profile have been changed. Execute 'source ~/.profile'"  --height=100
 
 	exit 0
 ;;
 
 ###############################################################################
-miron-depend)
+miron-dependencies)
+	progressbarinfo "Launching installation menu for Miron Dependencies"
+
+	zenity --question --height=100 --width=400 --text="The script is about to install Miron dependencies on this system.\n If you run this menu twice, you may need to fix the environment variables in ~/.profile.\n\nDo you want to proceed?" || abort 
+
+	ACTION=$(zenity \
+		--title "Install Miron Dependencies" \
+		--text "Please select the programs you want to install (you should select only the programs that are not installed yet):\n" \
+		--list --checklist \
+		--height=200 \
+		--width=400 \
+		--column="" --column=Action --column=Description \
+		--hide-column=2 --print-column=2 --hide-header \
+		--separator="|" \
+		false webots-install "2.1) Webots Simulator" \
+		false mrpt-install "2.2) MRPT SLAM Library" \
+		false ompl-install "2.3) OMPL - The Open Motion Planning Library " \
+	) || abort
+
+
+	IFS='|';
+	for A in $ACTION; do
+		bash $SCRIPT_NAME $A || askabort
+	done
+	echo
+	echo
+	echo '### Install script finished.'
+	progressbarinfo "Finished"
+	echo
+	echo
+
+	exit 0
+;;
+
+###############################################################################
+webots-install)
 	
 	# Clone Dependencies
 	mkdir -p $HOME/dev && cd $HOME/dev || askabort
 	
+	progressbarinfo "Clonning Webots Simulator"
 	WEBOTS_EXEC="$HOME/dev/webots/webots"
 	WEBOTS_DIR="$HOME/dev/webots/"
 	if [[ ! -x "$(command -v webots)" ]]; then 
@@ -476,16 +512,6 @@ miron-depend)
 		echo "Instructions in https://github.com/MiRON-project/DataRepository"
 	fi
 
-	MRPT_PATH="$HOME/dev/mrpt/"
-	if [ ! -d "${MRPT_PATH}" ]; then
-		clone_repos mrpt https://github.com/MiRON-project/mrpt.git || askabort
-	else
-		echo "You have mrpt folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
-	fi
-	
-	progressbarinfo "Installing MIRoN Dependencies"
-	sleep 2
-	
 	progressbarinfo "Building Webots Simulator"
 	if [ ! -x "$(command -v webots)" ] && [ ! -f "$WEBOTS_EXEC" ]; then
 		check_sudo
@@ -501,6 +527,21 @@ python3.7-dev || askabort
 		echo "export WEBOTS_HOME=\$HOME/dev/webots" >> ~/.profile
 	fi
 
+	zenity --info --width=400 --text="Environment settings in .profile have been changed. Execute 'source ~/.profile'"  --height=100
+	exit 0
+;;
+
+###############################################################################
+mrpt-install)
+	
+	mkdir -p $HOME/dev && cd $HOME/dev || askabort
+	MRPT_PATH="$HOME/dev/mrpt/"
+	if [ ! -d "${MRPT_PATH}" ]; then
+		clone_repos mrpt https://github.com/MiRON-project/mrpt.git || askabort
+	else
+		echo "You have mrpt folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
+	fi
+	
 	progressbarinfo "Building MRPT"
 	check_sudo
 	sudo apt -y install build-essential pkg-config cmake \
@@ -516,10 +557,30 @@ python3.7-dev || askabort
 	ln -s $HOME/dev/mrpt/build/lib ~/SOFTWARE/smartsoft/lib || askabort
 	mv ~/SOFTWARE/smartsoft/lib/lib ~/SOFTWARE/smartsoft/lib/mrpt || askabort
 	echo "export MRPT_DIR=\$HOME/dev/mrpt/build" >> ~/.profile
-	
 
-	zenity --info --width=400 --text="Environment settings in .profile have been changed. In order to use them, \ndo one of the following after the installation script finished:\n\n- Restart your computer\n- Logout/Login again\n- Execute 'source ~/.profile'"  --height=100
+	zenity --info --width=400 --text="Environment settings in .profile have been changed. Execute 'source ~/.profile'"  --height=100
+	exit 0
+;;
 
+###############################################################################
+ompl-install)
+
+	mkdir -p $HOME/dev && cd $HOME/dev || askabort
+	OMPL_PATH="$HOME/dev/ompl/"
+	if [ ! -d "${OMPL_PATH}" ]; then
+		mkdir -p ompl && cd ompl || askabort
+		wget https://ompl.kavrakilab.org/install-ompl-ubuntu.sh
+	else
+		echo "You have ompl folder in $HOME/dev/. If you do not installed it properly, remove it and run the script again."
+	fi
+
+	progressbarinfo "Building OMPL"
+	check_sudo
+	chmod u+x install-ompl-ubuntu.sh
+	./install-ompl-ubuntu.sh
+	echo "export OMPL_BUILD=\$HOME/dev/ompl/ompl-1.5.0/build/Release/build" >> ~/.profile
+
+	zenity --info --width=400 --text="Environment settings in .profile have been changed. Execute 'source ~/.profile'"  --height=100
 	exit 0
 ;;
 
