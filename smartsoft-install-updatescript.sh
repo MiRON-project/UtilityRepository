@@ -545,11 +545,10 @@ mrpt-install)
 	progressbarinfo "Building MRPT"
 	check_sudo
 	sudo apt -y install build-essential pkg-config cmake \
-	libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev || askabort
-		sudo apt -y install libftdi-dev freeglut3-dev zlib1g-dev \
-	sudo apt -y libusb-1.0-0-dev libudev-dev libfreenect-dev libdc1394-22-dev libavformat-dev \
-	libswscale-dev libassimp-dev libjpeg-dev libsuitesparse-dev libpcap-dev \
-	liboctomap-dev || askabort
+	libwxgtk3.0-dev libwxgtk3.0-gtk3-dev libopencv-dev libeigen3-dev libgtest-dev \
+	libftdi-dev freeglut3-dev zlib1g-dev libusb-1.0-0-dev libudev-dev libfreenect-dev \
+	libdc1394-22-dev libavformat-dev libswscale-dev libassimp-dev libjpeg-dev \
+	libsuitesparse-dev libpcap-dev liboctomap-dev libglfw3-dev || askabort
 	mkdir -p $MRPT_PATH/build
 	cd $MRPT_PATH/build 
 	cmake .. || ( rm -rf $MRPT_PATH/build && askabort )
@@ -596,6 +595,8 @@ repo-up-smartsoft)
 		echo -e "\n\n\n# Not running repo update.\n\n\n"
 		exit 0
 	fi
+	
+	source ~/.profile
 
 	progressbarinfo "Updating SmartSoftComponentDeveloperAPIcpp..."
 	cd $SMART_ROOT_ACE/repos/SmartSoftComponentDeveloperAPIcpp || askabort
