@@ -300,7 +300,7 @@ package-install)
  zlib1g-dev zlibc libusb-1.0-0-dev libdc1394-22-dev libavformat-dev \
  libswscale-dev lib3ds-dev libjpeg-dev libgtest-dev libeigen3-dev libglew-dev \
  vim vim-gnome libxml2-dev libxml++2.6-dev libmrpt-dev ssh sshfs xterm \
- libjansson-dev libqt5*-dev || askabort
+ libjansson-dev libqt5*-dev qtwayland5 || askabort
 
 	# Installing Gtest
 	cd /usr/src/gtest || askabort
