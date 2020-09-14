@@ -222,8 +222,9 @@ menu)
 		false menu-install "1) Install ACE/SmartSoft Development Environment" \
 		false miron-dependencies "2) Install MIRoN Dependencies"  \
 		false toolchain-update "3) Update/Install SmartMDSD Toolchain to latest version" \
-		false repo-up-smartsoft "4) Update ACE/SmartSoft Development Environment (updates repositories)" \
-		false build-smartsoft "5) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Run Code-Generation before)" \
+		false roqme-depend "4) Install RoQME Dependencies: OpenSliceDDS, GTK 2 and MPC" \
+		false repo-up-smartsoft "5) Update ACE/SmartSoft Development Environment (updates repositories)" \
+		false build-smartsoft "6) Build/Compile ACE/SmartSoftm DomainModels and Components (You must Run Code-Generation before)" \
 	) || exit 1
 
 	CMD=""
@@ -260,7 +261,6 @@ menu-install)
 		--separator="|" \
 		false package-install "1.1) Install General Dependencies for ACE/SmartSoft/Miron" \
 		false ace-source-install "1.2) Install ACE from source" \
-		false roqme-depend "1.3) RoQME Dependencies: OpenSliceDDS, GTK 2 and MPC" \
 		false repo-co-smartsoft "1.4) Clone repositories and set environment variables" \
 	) || abort
 
