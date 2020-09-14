@@ -261,7 +261,7 @@ menu-install)
 		--separator="|" \
 		false package-install "1.1) Install General Dependencies for ACE/SmartSoft/Miron" \
 		false ace-source-install "1.2) Install ACE from source" \
-		false repo-co-smartsoft "1.4) Clone repositories and set environment variables" \
+		false repo-co-smartsoft "1.3) Clone repositories and set environment variables" \
 	) || abort
 
 
