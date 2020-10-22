@@ -605,15 +605,17 @@ repo-up-smartsoft)
 
 	progressbarinfo "Updating AceSmartSoftFramework..."
 	cd $SMART_ROOT_ACE/repos/AceSmartSoftFramework || askabort
-	git reset --hard HEAD
-	git pull || askabort
+	create_remote_miron "https://github.com/MiRON-project/AceSmartSoftFramework" || askabort
+	switch_master_branch "miron" "master"
+	git pull miron master || askabort
+	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating UtilityRepository..."
 	cd $SMART_ROOT_ACE/repos/UtilityRepository || askabort
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/UtilityRepository.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating DataRepository..."
@@ -621,7 +623,7 @@ repo-up-smartsoft)
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/DataRepository.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating DomainModelsRepositories..."
@@ -629,7 +631,7 @@ repo-up-smartsoft)
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/DomainModelsRepositories.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating ComponentRepository..."
@@ -637,7 +639,7 @@ repo-up-smartsoft)
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/ComponentRepository.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating SystemRepository..."
@@ -645,7 +647,7 @@ repo-up-smartsoft)
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/SystemRepository.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	progressbarinfo "Updating BehaviorRepository..."
@@ -653,7 +655,7 @@ repo-up-smartsoft)
 	git reset --hard HEAD
 	create_remote_miron "https://github.com/MiRON-project/BehaviorRepository.git" || askabort
 	switch_master_branch "miron" "master"
-	git pull || askabort
+	git pull miron master || askabort
 	git submodule update --init --recursive || askabort
 
 	exit 0
